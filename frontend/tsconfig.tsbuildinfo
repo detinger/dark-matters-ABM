@@ -1,0 +1,1 @@
+{"root":["./src/app.tsx","./src/main.tsx","./src/vite-env.d.ts","./src/components/chartspanel.tsx","./src/components/controlpanel.tsx","./src/components/kpicards.tsx","./src/components/networkgraphpanel.tsx","./src/components/simulationlist.tsx","./src/hooks/usesimulation.ts","./src/lib/api.ts","./src/types/index.ts"],"version":"5.9.3"}
