@@ -37,7 +37,7 @@ The project is intentionally designed as a **starter**: it already runs, but it 
 - KPI cards
 - Tipping-point status panel
 - Time-series charts
-- Full-network visualization with platform node, live legend, and colored trust states
+- Full-network visualization with platform node, live legend, colored trust states, and always-on animated interaction effects
 - Live run mode with speed slider
 - CSV export button for the active simulation
 - Session list for loading/deleting in-memory runs
@@ -124,7 +124,7 @@ Responsible for:
 - visualizing metrics
 - live stepping controls
 - CSV export
-- visualizing full network state
+- visualizing full network state and animated interaction events
 - interacting with the API
 
 ---
@@ -162,7 +162,7 @@ The simulation uses a user network rather than a 2D grid. The backend currently 
 - `scale_free`
 - `random`
 
-The dashboard now visualizes the full user graph and also includes the platform as a distinct graph node.
+The dashboard now visualizes the full user graph, includes the platform as a distinct graph node, and keeps a stable per-simulation layout so interaction animations can play without node positions shifting on every tick.
 
 ---
 
@@ -248,6 +248,7 @@ Returns:
 - current step
 - latest metrics
 - full network snapshot
+- recent interaction events for animated network rendering
 - platform state
 - tipping-point status
 
@@ -399,7 +400,7 @@ http://localhost:5173
    - `Run Live`
    - adjust `Live speed` if needed
    - `Export CSV` when you want the run data
-6. Inspect KPI cards, charts, and the network snapshot
+6. Inspect KPI cards, charts, tipping points, and the animated network snapshot
 
 ---
 
@@ -459,7 +460,7 @@ You should treat this as a scaffold. For thesis use, you will likely want to:
 ### 1. Strengthen the scientific model
 Good next steps:
 - replace bounded normal sampling with proper Beta distributions [DONE]
-- calibrate parameters from literature or survey data
+- calibrate parameters from literature or survey data [PLAN ADDED]
 - formalize tipping point detection [DONE]
 - store agent-type segments explicitly
 - improve revenue model
@@ -479,7 +480,7 @@ Possible upgrades:
 - export to CSV/JSON/PNG [CSV DONE]
 - parameter presets
 - richer network controls
-- dark mode and polished layout system
+- dark mode and polished layout system [DONE]
 
 ### 4. Improve research workflows
 Possible upgrades:
@@ -506,6 +507,7 @@ Current limitations include:
 - metrics are illustrative and not empirically calibrated
 - there is no authentication or persistence layer
 - long experiment execution is synchronous
+- the full animated network can become visually and computationally heavy at large population sizes
 
 
 ---
@@ -548,7 +550,7 @@ Check:
 That is expected if the backend restarts because sessions are stored in memory.
 
 ### Full graph feels heavy
-The dashboard now renders the full network plus a platform node. Large populations can make the browser graph slower, especially near the upper end of the allowed user count.
+The dashboard now renders the full network plus a platform node and animated interaction events. Large populations can make the browser graph slower, especially near the upper end of the allowed user count.
 
 ---
 
