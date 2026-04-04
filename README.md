@@ -7,6 +7,7 @@ This repository gives you a clean foundation for a research prototype where:
 - **Mesa** handles the simulation model in Python
 - **FastAPI** exposes the simulation through a REST API
 - **React + TypeScript + Vite** provide a modern dashboard UI
+- **Mesa + SolaraViz** are available as an optional original Mesa frontend
 - **Recharts** renders time-series charts
 - **react-force-graph** visualizes the full user network plus the platform node
 
@@ -61,7 +62,8 @@ The project is intentionally designed as a **starter**: it already runs, but it 
 │   │   │   ├── model.py
 │   │   │   └── service.py
 │   │   ├── experiments.py
-│   │   └── main.py
+│   │   ├── main.py
+│   │   └── solara_app.py
 │   └── requirements.txt
 ├── frontend/
 │   ├── public/
@@ -90,11 +92,8 @@ The project is intentionally designed as a **starter**: it already runs, but it 
 ## Architecture
 
 ```text
-React + TypeScript (frontend)
-        ↓ HTTP
-FastAPI (backend API)
-        ↓
-Mesa model + simulation service
+Option A: React + TypeScript -> FastAPI -> Mesa model
+Option B: Mesa + SolaraViz -> Mesa model
 ```
 
 ### Responsibilities by layer
@@ -293,16 +292,40 @@ Removes the simulation from in-memory storage.
 
 ## Running the project
 
-## Prerequisites
+### Prerequisites
 
 You should have installed:
 - **Python 3.11+** recommended
-- **Node.js 20+** recommended
-- **npm**
+- **Node.js 20+** recommended for the React dashboard
+- **npm** for the React dashboard
 
 ---
 
-## 1. Start the backend
+## Quick Local Scripts
+
+If you want the fastest local setup/run path from the repository root, use:
+
+```bash
+./setup-local.sh
+./run-local.sh
+```
+
+What they do:
+
+- `./setup-local.sh`
+  - creates `backend/.venv`
+  - installs backend dependencies
+  - installs frontend dependencies
+  - creates `frontend/.env` from `.env.example` if needed
+  - sets `VITE_API_BASE=http://localhost:8000/api`
+- `./run-local.sh`
+  - starts the backend with `python -m app.dev_server`
+  - starts the frontend with `npm run dev`
+  - stops both services when you press `Ctrl+C`
+
+---
+
+## 1. Manual setup
 
 Open a terminal in `backend/`.
 
@@ -326,12 +349,23 @@ python -m venv .venv
 pip install -r requirements.txt
 ```
 
-### Run the API
+---
+
+## 2. Choose a frontend
+
+You can now run the project in either of these ways:
+
+- **React dashboard + FastAPI** if you want the existing custom web app
+- **Mesa SolaraViz** if you want the original Mesa-style interactive frontend
+
+### Option A. Run the existing React dashboard
+
+#### Run the API
 
 From the `backend/` folder:
 
 ```bash
-uvicorn app.main:app --reload
+python -m app.dev_server
 ```
 
 The backend should be available at:
@@ -346,9 +380,7 @@ Interactive docs will be available at:
 http://localhost:8000/docs
 ```
 
----
-
-## 2. Start the frontend
+#### Start the React frontend
 
 Open a second terminal in `frontend/`.
 
@@ -378,15 +410,33 @@ Copy-Item .env.example .env
 npm run dev
 ```
 
-The frontend should be available at:
+The React app should be available at:
 
 ```text
 http://localhost:5173
 ```
 
+### Option B. Run the Mesa SolaraViz frontend
+
+From the `backend/` folder:
+
+```bash
+solara run app/solara_app.py --production --port 8765
+```
+
+The Mesa frontend should be available at:
+
+```text
+http://localhost:8765
+```
+
+This mode reuses the same `DarkPatternTrustModel`, keeps the platform visible in the network view, and gives you Mesa's built-in play, pause, step, and reset controls without needing the React app or FastAPI server.
+
 ---
 
 ## First run workflow
+
+### React dashboard path
 
 1. Start the backend
 2. Start the frontend
@@ -398,9 +448,14 @@ http://localhost:5173
    - `Run -10`
    - `Run +10`
    - `Run Live`
-   - adjust `Live speed` if needed
-   - `Export CSV` when you want the run data
-6. Inspect KPI cards, charts, tipping points, and the animated network snapshot
+
+### Mesa SolaraViz path
+
+1. Start the Solara app
+2. Open `http://localhost:8765`
+3. Adjust parameters in the Mesa controls
+4. Use `Step`, `Play/Pause`, and `Reset`
+5. Inspect the network overview, summary tables, and Mesa plots
 
 ---
 
@@ -423,12 +478,6 @@ The script writes results to:
 ```text
 backend/results/batch_results.csv
 ```
-
-You should treat this as a scaffold. For thesis use, you will likely want to:
-- add more scenario families
-- add parameter sweeps
-- persist outputs in a more structured way
-- generate figures automatically
 
 ---
 
@@ -531,7 +580,7 @@ That framing keeps:
 Make sure you are in the `backend/` folder when starting Uvicorn:
 
 ```bash
-uvicorn app.main:app --reload
+python -m app.dev_server
 ```
 
 ### CORS errors in the browser
