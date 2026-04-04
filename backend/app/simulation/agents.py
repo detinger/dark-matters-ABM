@@ -26,6 +26,7 @@ class UserAgent(mesa.Agent):
         self.complaint_propensity = clamp(complaint_propensity)
         self.switching_cost = clamp(switching_cost)
         self.trust_baseline = clamp(trust_baseline)
+        self.network_id: int | None = None
 
         self.trust = clamp(trust_baseline)
         self.perceived_fairness = clamp(trust_baseline)
@@ -103,9 +104,11 @@ class UserAgent(mesa.Agent):
         self.last_churn_probability = clamp(p)
         return self.last_churn_probability
 
-    def maybe_churn(self) -> None:
+    def maybe_churn(self) -> bool:
         if self.active and self.random.random() < self.compute_churn_probability():
             self.active = False
+            return True
+        return False
 
     def to_snapshot(self) -> dict:
         return {

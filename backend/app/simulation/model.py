@@ -133,6 +133,7 @@ class DarkPatternTrustModel(mesa.Model):
                 "step": None,
             },
         }
+        self.recent_events = self._empty_recent_events()
 
         self.platform = PlatformAgent(
             self,
@@ -158,6 +159,7 @@ class DarkPatternTrustModel(mesa.Model):
 
         for node_id, agent in zip(self.graph.nodes(), self.user_agents):
             self.graph.nodes[node_id]["agent"] = agent
+            agent.network_id = int(node_id)
 
         self.datacollector = mesa.DataCollector(
             model_reporters={
@@ -199,6 +201,14 @@ class DarkPatternTrustModel(mesa.Model):
         beta = (1.0 - bounded_mean) * concentration
         return clamp(self.random.betavariate(alpha, beta))
 
+    def _empty_recent_events(self) -> dict:
+        return {
+            "step": 0,
+            "direct_exposures": [],
+            "social_edges": [],
+            "churned_nodes": [],
+        }
+
     def _build_network(self, num_users: int, network_type: str, avg_degree: int, rewire_prob: float):
         seed = self.random.randint(0, 1_000_000)
         if network_type == "small_world":
@@ -219,7 +229,8 @@ class DarkPatternTrustModel(mesa.Model):
             severity += self.drip_pricing_severity
         return clamp(severity)
 
-    def _propagate_social_signals(self):
+    def _propagate_social_signals(self) -> list[dict]:
+        social_edges = []
         for node_id in self.graph.nodes():
             sender = self.graph.nodes[node_id]["agent"]
             if not sender.active:
@@ -230,7 +241,14 @@ class DarkPatternTrustModel(mesa.Model):
             for nbr in self.graph.neighbors(node_id):
                 receiver = self.graph.nodes[nbr]["agent"]
                 if receiver.active and self.random.random() < self.review_visibility:
-                    receiver.received_negative_signal += self.social_influence_strength * wom
+                    intensity = self.social_influence_strength * wom
+                    receiver.received_negative_signal += intensity
+                    social_edges.append({
+                        "source": int(node_id),
+                        "target": int(nbr),
+                        "intensity": round(intensity, 4),
+                    })
+        return social_edges
 
     def _update_platform_outcomes(self):
         active = [a for a in self.user_agents if a.active]
@@ -331,27 +349,46 @@ class DarkPatternTrustModel(mesa.Model):
             for name, point in self.tipping_points.items()
         }
 
+    def get_recent_events(self) -> dict:
+        return {
+            "step": int(self.steps),
+            "direct_exposures": list(self.recent_events["direct_exposures"]),
+            "social_edges": list(self.recent_events["social_edges"]),
+            "churned_nodes": list(self.recent_events["churned_nodes"]),
+        }
+
     def step(self):
         if self.steps >= self.max_steps:
             self.running = False
             return
 
+        direct_exposures = []
         for user in self.user_agents:
             if user.active:
                 user.last_exposure = 0.0
                 sev = self._sample_direct_exposure()
                 if sev > 0:
                     user.apply_direct_exposure(sev)
+                    if user.network_id is not None:
+                        direct_exposures.append(user.network_id)
 
-        self._propagate_social_signals()
+        social_edges = self._propagate_social_signals()
 
         for user in self.user_agents:
             user.apply_social_signal()
         for user in self.user_agents:
             user.apply_recovery()
+        churned_nodes = []
         for user in self.user_agents:
-            user.maybe_churn()
+            if user.maybe_churn() and user.network_id is not None:
+                churned_nodes.append(user.network_id)
 
         self._update_platform_outcomes()
         self.platform.adapt_strategy()
+        self.recent_events = {
+            "step": int(self.steps),
+            "direct_exposures": direct_exposures,
+            "social_edges": social_edges,
+            "churned_nodes": churned_nodes,
+        }
         self.datacollector.collect(self)

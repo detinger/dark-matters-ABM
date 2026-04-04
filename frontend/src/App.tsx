@@ -99,7 +99,12 @@ export default function App() {
               <KpiCards metrics={state.metrics} platform={state.platform} steps={state.steps} maxSteps={state.max_steps} />
               <TippingPointsPanel tippingPoints={state.tipping_points} />
               <ChartsPanel series={timeseries} tippingPoints={state.tipping_points} />
-              <NetworkGraphPanel snapshot={state.network_snapshot} />
+              <NetworkGraphPanel
+                simulationId={state.simulation_id}
+                steps={state.steps}
+                snapshot={state.network_snapshot}
+                recentEvents={state.recent_events}
+              />
             </>
           ) : (
             <section className="panel empty-state">

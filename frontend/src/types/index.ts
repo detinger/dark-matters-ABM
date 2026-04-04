@@ -72,6 +72,19 @@ export interface TippingPointState {
   step: number | null
 }
 
+export interface RecentSocialEdge {
+  source: number
+  target: number
+  intensity: number
+}
+
+export interface RecentEventsState {
+  step: number
+  direct_exposures: number[]
+  social_edges: RecentSocialEdge[]
+  churned_nodes: number[]
+}
+
 export interface SimulationState {
   simulation_id: string
   steps: number
@@ -81,6 +94,7 @@ export interface SimulationState {
   network_snapshot: NetworkSnapshot
   platform: PlatformState
   tipping_points: Record<string, TippingPointState>
+  recent_events: RecentEventsState
 }
 
 export interface SimulationSummary {

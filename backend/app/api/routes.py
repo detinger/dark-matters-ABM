@@ -37,6 +37,7 @@ def _serialize_simulation_state(session, simulation_id: str) -> dict:
             "long_term_revenue": session.model.platform.long_term_revenue,
         },
         "tipping_points": session.model.get_tipping_points(),
+        "recent_events": session.model.get_recent_events(),
     }
 
 
