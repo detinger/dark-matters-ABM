@@ -20,6 +20,26 @@ from app.simulation.service import simulation_service
 router = APIRouter()
 
 
+def _serialize_simulation_state(session, simulation_id: str) -> dict:
+    return {
+        "simulation_id": simulation_id,
+        "steps": session.model.steps,
+        "max_steps": session.model.max_steps,
+        "params": session.params,
+        "metrics": session.model.get_latest_metrics(),
+        "network_snapshot": session.model.get_network_snapshot(),
+        "platform": {
+            "dark_pattern_intensity": session.model.platform.dark_pattern_intensity,
+            "customer_support_quality": session.model.platform.customer_support_quality,
+            "adaptive_platform": session.model.platform.adaptive_platform,
+            "reputation": session.model.platform.reputation,
+            "short_term_revenue": session.model.platform.short_term_revenue,
+            "long_term_revenue": session.model.platform.long_term_revenue,
+        },
+        "tipping_points": session.model.get_tipping_points(),
+    }
+
+
 @router.get("/health", response_model=HealthResponse)
 def healthcheck():
     return {"status": "ok"}
@@ -47,22 +67,7 @@ def get_simulation_state(simulation_id: str):
         session = simulation_service.get(simulation_id)
     except KeyError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
-    return {
-        "simulation_id": simulation_id,
-        "steps": session.model.steps,
-        "max_steps": session.model.max_steps,
-        "params": session.params,
-        "metrics": session.model.get_latest_metrics(),
-        "network_snapshot": session.model.get_network_snapshot(),
-        "platform": {
-            "dark_pattern_intensity": session.model.platform.dark_pattern_intensity,
-            "customer_support_quality": session.model.platform.customer_support_quality,
-            "adaptive_platform": session.model.platform.adaptive_platform,
-            "reputation": session.model.platform.reputation,
-            "short_term_revenue": session.model.platform.short_term_revenue,
-            "long_term_revenue": session.model.platform.long_term_revenue,
-        },
-    }
+    return _serialize_simulation_state(session, simulation_id)
 
 
 @router.post("/simulations/{simulation_id}/step", response_model=SimulationStateResponse)
@@ -71,22 +76,7 @@ def step_simulation(simulation_id: str, payload: StepRequest):
         session = simulation_service.step(simulation_id, payload.count)
     except KeyError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
-    return {
-        "simulation_id": simulation_id,
-        "steps": session.model.steps,
-        "max_steps": session.model.max_steps,
-        "params": session.params,
-        "metrics": session.model.get_latest_metrics(),
-        "network_snapshot": session.model.get_network_snapshot(),
-        "platform": {
-            "dark_pattern_intensity": session.model.platform.dark_pattern_intensity,
-            "customer_support_quality": session.model.platform.customer_support_quality,
-            "adaptive_platform": session.model.platform.adaptive_platform,
-            "reputation": session.model.platform.reputation,
-            "short_term_revenue": session.model.platform.short_term_revenue,
-            "long_term_revenue": session.model.platform.long_term_revenue,
-        },
-    }
+    return _serialize_simulation_state(session, simulation_id)
 
 
 @router.post("/simulations/{simulation_id}/reset", response_model=SimulationStateResponse)
@@ -95,22 +85,7 @@ def reset_simulation(simulation_id: str):
         session = simulation_service.reset(simulation_id)
     except KeyError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
-    return {
-        "simulation_id": simulation_id,
-        "steps": session.model.steps,
-        "max_steps": session.model.max_steps,
-        "params": session.params,
-        "metrics": session.model.get_latest_metrics(),
-        "network_snapshot": session.model.get_network_snapshot(),
-        "platform": {
-            "dark_pattern_intensity": session.model.platform.dark_pattern_intensity,
-            "customer_support_quality": session.model.platform.customer_support_quality,
-            "adaptive_platform": session.model.platform.adaptive_platform,
-            "reputation": session.model.platform.reputation,
-            "short_term_revenue": session.model.platform.short_term_revenue,
-            "long_term_revenue": session.model.platform.long_term_revenue,
-        },
-    }
+    return _serialize_simulation_state(session, simulation_id)
 
 
 @router.get("/simulations/{simulation_id}/timeseries", response_model=SimulationTimeseriesResponse)

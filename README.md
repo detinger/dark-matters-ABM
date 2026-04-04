@@ -1,6 +1,6 @@
 # Dark Patterns ABM simulation web app
 
-A full-stack  project for exploring **agent-based simulations of dark patterns and long-term user trust erosion**.
+A full-stack project for exploring **agent-based simulations of dark patterns and long-term user trust erosion**.
 
 This repository gives you a clean foundation for a research prototype where:
 
@@ -8,7 +8,7 @@ This repository gives you a clean foundation for a research prototype where:
 - **FastAPI** exposes the simulation through a REST API
 - **React + TypeScript + Vite** provide a modern dashboard UI
 - **Recharts** renders time-series charts
-- **react-force-graph** visualizes a sampled user network
+- **react-force-graph** visualizes the full user network plus the platform node
 
 The project is intentionally designed as a **starter**: it already runs, but it also leaves room for substantial research and engineering improvements.
 
@@ -18,13 +18,16 @@ The project is intentionally designed as a **starter**: it already runs, but it 
 
 ### Backend
 - Mesa-based ABM for trust erosion under dark patterns
+- Beta-distributed user trait sampling for bounded behavioral parameters
 - In-memory simulation session manager
+- Formal tipping-point detection with persistent trigger rules
 - FastAPI endpoints for:
   - creating simulations
-  - stepping simulations
+  - stepping simulations forward and backward
   - resetting simulations
   - fetching current state
   - fetching time-series results
+  - exporting run data to CSV
   - deleting simulations
 - Batch experiment runner scaffold
 
@@ -32,8 +35,11 @@ The project is intentionally designed as a **starter**: it already runs, but it 
 - Modern React dashboard
 - Simulation creation form
 - KPI cards
+- Tipping-point status panel
 - Time-series charts
-- Network snapshot visualization
+- Full-network visualization with platform node, live legend, and colored trust states
+- Live run mode with speed slider
+- CSV export button for the active simulation
 - Session list for loading/deleting in-memory runs
 
 ---
@@ -73,6 +79,8 @@ The project is intentionally designed as a **starter**: it already runs, but it 
 │   ├── tsconfig.json
 │   ├── tsconfig.node.json
 │   └── vite.config.ts
+├── dark-matters-ABM-COLAB.py
+├── CALIBRATION_PLAN.md
 ├── .gitignore
 └── README.md
 ```
@@ -99,6 +107,7 @@ Responsible for:
 - trust updates
 - churn logic
 - revenue and reputation proxies
+- tipping-point detection
 - time-series collection
 
 #### FastAPI layer
@@ -113,7 +122,9 @@ Responsible for:
 - parameter input
 - scenario control
 - visualizing metrics
-- visualizing sampled network state
+- live stepping controls
+- CSV export
+- visualizing full network state
 - interacting with the API
 
 ---
@@ -151,6 +162,8 @@ The simulation uses a user network rather than a 2D grid. The backend currently 
 - `scale_free`
 - `random`
 
+The dashboard now visualizes the full user graph and also includes the platform as a distinct graph node.
+
 ---
 
 ## Main simulation mechanics
@@ -171,6 +184,19 @@ Each simulation step roughly follows this order:
    - reputation and revenue proxies are updated
 7. **Optional adaptation**
    - platform may reduce dark pattern intensity if outcomes worsen
+
+### Formal tipping-point detection
+
+The current implementation records a tipping point only when a rule remains true for **3 consecutive steps**.
+
+- **Trust Collapse**
+  - `mean_trust <= 0.50`
+- **Social Contagion**
+  - `negative_wom_rate >= 0.22`
+- **Churn Cascade**
+  - `cumulative_churn >= 0.35`
+- **Extractive Divergence**
+  - revenue gap is at least `20%` of short-term revenue while `cumulative_churn >= 0.15`
 
 ---
 
@@ -221,8 +247,9 @@ Returns:
 - parameters
 - current step
 - latest metrics
-- sampled network snapshot
+- full network snapshot
 - platform state
+- tipping-point status
 
 ### Step simulation
 `POST /simulations/{simulation_id}/step`
@@ -235,6 +262,8 @@ Request body:
 
 This advances the model by the requested number of steps or until `max_steps` is reached.
 
+Negative values are also supported, which rewinds the simulation deterministically by rebuilding from the original seed and replaying to the target step.
+
 ### Reset simulation
 `POST /simulations/{simulation_id}/reset`
 
@@ -244,6 +273,15 @@ Resets the existing session using its original parameters.
 `GET /simulations/{simulation_id}/timeseries`
 
 Returns a list of data points from Mesa `DataCollector`.
+
+### Export CSV
+`GET /simulations/{simulation_id}/export.csv`
+
+Downloads a CSV containing:
+- one row per step
+- all collected model metrics
+- tipping-point trigger flags and trigger steps
+- the full parameter set repeated on each row for analysis portability
 
 ### Delete simulation
 `DELETE /simulations/{simulation_id}`
@@ -354,9 +392,13 @@ http://localhost:5173
 3. Open the dashboard in your browser
 4. Create a simulation using the left-hand form
 5. Click:
+   - `Step -1`
    - `Step +1`
+   - `Run -10`
    - `Run +10`
-   - `Run +52`
+   - `Run Live`
+   - adjust `Live speed` if needed
+   - `Export CSV` when you want the run data
 6. Inspect KPI cards, charts, and the network snapshot
 
 ---
@@ -416,9 +458,9 @@ You should treat this as a scaffold. For thesis use, you will likely want to:
 
 ### 1. Strengthen the scientific model
 Good next steps:
-- replace bounded normal sampling with proper Beta distributions
+- replace bounded normal sampling with proper Beta distributions [DONE]
 - calibrate parameters from literature or survey data
-- formalize tipping point detection
+- formalize tipping point detection [DONE]
 - store agent-type segments explicitly
 - improve revenue model
 
@@ -427,24 +469,30 @@ Possible upgrades:
 - add persistent storage for simulation metadata
 - save results to Postgres or Redis (I don't need that for now)
 - add background jobs for long experiments
-- add WebSocket streaming for live runs (only if it improves the app)
+- add WebSocket streaming for live runs (current live mode uses repeated HTTP stepping)
 - add authentication if needed
 
 ### 3. Improve frontend UX
 Possible upgrades:
 - scenario comparison view
 - multiple saved charts
-- export to CSV/JSON/PNG
+- export to CSV/JSON/PNG [CSV DONE]
 - parameter presets
 - richer network controls
 - dark mode and polished layout system
 
 ### 4. Improve research workflows
 Possible upgrades:
-- notebook analysis pipeline 
-- automated report generation
+- notebook analysis pipeline [DONE]
+- automated report generation [DONE, csv/colab]
 - sensitivity analysis dashboards
 - experiment registry
+
+## Calibration reference
+
+For a parameter-by-parameter calibration plan linked to literature, surveys, audits, and behavioral data, see:
+
+- `CALIBRATION_PLAN.md`
 
 ---
 
@@ -454,18 +502,17 @@ Possible upgrades:
 Current limitations include:
 - simulation sessions are stored **in memory only**
 - restarting the backend clears all sessions
-- network visualization uses only a sampled subset of nodes
+- backward stepping works by deterministic replay, so large rewinds are more computationally expensive than forward steps
 - metrics are illustrative and not empirically calibrated
 - there is no authentication or persistence layer
 - long experiment execution is synchronous
 
-These limitations are acceptable for a starter and often acceptable for a thesis prototype, but they should be acknowledged in a formal research write-up.
 
 ---
 
 ## Suggested thesis framing
 
-This project supports a thesis framing like:
+This project supports a framing like:
 
 > A stochastic, network-based agent-based simulation of long-term trust erosion caused by dark patterns in digital applications, exposed through a modern web interface for scenario exploration and comparative analysis.
 
@@ -500,6 +547,9 @@ Check:
 ### Simulation disappears
 That is expected if the backend restarts because sessions are stored in memory.
 
+### Full graph feels heavy
+The dashboard now renders the full network plus a platform node. Large populations can make the browser graph slower, especially near the upper end of the allowed user count.
+
 ---
 
 ## Recommended next files to add
@@ -516,19 +566,9 @@ If you want to continue developing this seriously, the next high-value additions
 
 ---
 
-## License
-
-This starter is provided as a development scaffold. Add your preferred license before publishing or sharing widely.
-
----
-
 ## Final note
-
-This repository is meant to get you from **research idea** to **running full-stack prototype** quickly.
 
 The simulation is already separated cleanly enough that you can evolve it in three directions at once:
 - scientific model refinement
 - API hardening
 - UI modernization
-
-That makes it a very good base for a diploma thesis, internal demo, or later publication-oriented prototype.

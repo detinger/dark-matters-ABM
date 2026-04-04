@@ -6,12 +6,23 @@ import mesa
 from app.simulation.agents import UserAgent, PlatformAgent, clamp
 from app.simulation.metrics import (
     active_users,
+    any_tipping_point_triggered,
+    churn_cascade_step,
+    churn_cascade_triggered,
+    extractive_divergence_step,
+    extractive_divergence_triggered,
+    first_tipping_point_step,
     mean_trust,
     mean_harm,
     churn_rate,
     cumulative_churn,
     reputation,
+    social_contagion_step,
+    social_contagion_triggered,
     short_term_revenue,
+    tipping_points_triggered_count,
+    trust_collapse_step,
+    trust_collapse_triggered,
     long_term_revenue,
     negative_wom_rate,
 )
@@ -89,6 +100,39 @@ class DarkPatternTrustModel(mesa.Model):
         self.drip_pricing_severity = drip_pricing_severity
         self.churn_rate = 0.0
         self.cumulative_churn = 0.0
+        self.tipping_point_persistence = 3
+        self._tipping_streaks = {
+            "trust_collapse": 0,
+            "social_contagion": 0,
+            "churn_cascade": 0,
+            "extractive_divergence": 0,
+        }
+        self.tipping_points = {
+            "trust_collapse": {
+                "label": "Trust Collapse",
+                "description": "Mean trust stays at or below 0.50 for three consecutive steps.",
+                "triggered": False,
+                "step": None,
+            },
+            "social_contagion": {
+                "label": "Social Contagion",
+                "description": "Negative WOM stays at or above 0.22 for three consecutive steps.",
+                "triggered": False,
+                "step": None,
+            },
+            "churn_cascade": {
+                "label": "Churn Cascade",
+                "description": "Cumulative churn stays at or above 0.35 for three consecutive steps.",
+                "triggered": False,
+                "step": None,
+            },
+            "extractive_divergence": {
+                "label": "Extractive Divergence",
+                "description": "Revenue gap exceeds 20% of short-term revenue while cumulative churn stays at or above 0.15 for three consecutive steps.",
+                "triggered": False,
+                "step": None,
+            },
+        }
 
         self.platform = PlatformAgent(
             self,
@@ -103,12 +147,12 @@ class DarkPatternTrustModel(mesa.Model):
         for _ in range(num_users):
             agent = UserAgent(
                 self,
-                digital_literacy=self._draw_bounded_normal(digital_literacy_mean, digital_literacy_sd),
-                manipulation_sensitivity=self._draw_bounded_normal(manipulation_sensitivity_mean, manipulation_sensitivity_sd),
-                social_activity=self._draw_bounded_normal(social_activity_mean, social_activity_sd),
-                complaint_propensity=self._draw_bounded_normal(complaint_propensity_mean, complaint_propensity_sd),
-                switching_cost=self._draw_bounded_normal(switching_cost_mean, switching_cost_sd),
-                trust_baseline=self._draw_bounded_normal(trust_baseline_mean, trust_baseline_sd),
+                digital_literacy=self._draw_beta(digital_literacy_mean, digital_literacy_sd),
+                manipulation_sensitivity=self._draw_beta(manipulation_sensitivity_mean, manipulation_sensitivity_sd),
+                social_activity=self._draw_beta(social_activity_mean, social_activity_sd),
+                complaint_propensity=self._draw_beta(complaint_propensity_mean, complaint_propensity_sd),
+                switching_cost=self._draw_beta(switching_cost_mean, switching_cost_sd),
+                trust_baseline=self._draw_beta(trust_baseline_mean, trust_baseline_sd),
             )
             self.user_agents.append(agent)
 
@@ -126,12 +170,34 @@ class DarkPatternTrustModel(mesa.Model):
                 "negative_wom_rate": negative_wom_rate,
                 "short_term_revenue": short_term_revenue,
                 "long_term_revenue": long_term_revenue,
+                "trust_collapse_triggered": trust_collapse_triggered,
+                "trust_collapse_step": trust_collapse_step,
+                "social_contagion_triggered": social_contagion_triggered,
+                "social_contagion_step": social_contagion_step,
+                "churn_cascade_triggered": churn_cascade_triggered,
+                "churn_cascade_step": churn_cascade_step,
+                "extractive_divergence_triggered": extractive_divergence_triggered,
+                "extractive_divergence_step": extractive_divergence_step,
+                "tipping_points_triggered_count": tipping_points_triggered_count,
+                "any_tipping_point_triggered": any_tipping_point_triggered,
+                "first_tipping_point_step": first_tipping_point_step,
             },
         )
         self.datacollector.collect(self)
 
-    def _draw_bounded_normal(self, mean: float, sd: float) -> float:
-        return clamp(self.random.gauss(mean, sd))
+    def _draw_beta(self, mean: float, sd: float) -> float:
+        epsilon = 1e-6
+        bounded_mean = min(max(mean, epsilon), 1.0 - epsilon)
+        requested_variance = max(sd, epsilon) ** 2
+        max_variance = bounded_mean * (1.0 - bounded_mean)
+
+        # If callers request an infeasible variance for a Beta distribution, use the
+        # widest valid one while preserving the requested mean.
+        bounded_variance = min(requested_variance, max_variance * (1.0 - epsilon))
+        concentration = (bounded_mean * (1.0 - bounded_mean) / bounded_variance) - 1.0
+        alpha = bounded_mean * concentration
+        beta = (1.0 - bounded_mean) * concentration
+        return clamp(self.random.betavariate(alpha, beta))
 
     def _build_network(self, num_users: int, network_type: str, avg_degree: int, rewire_prob: float):
         seed = self.random.randint(0, 1_000_000)
@@ -183,6 +249,31 @@ class DarkPatternTrustModel(mesa.Model):
             short_gain += 0.8 * a.last_exposure
         self.platform.short_term_revenue += short_gain
         self.platform.long_term_revenue = self.platform.short_term_revenue * (1.0 - self.cumulative_churn)
+        self._update_tipping_points(mean_tr, mean_wom)
+
+    def _update_tipping_points(self, mean_trust_value: float, mean_wom_value: float) -> None:
+        revenue_gap_share = 0.0
+        if self.platform.short_term_revenue > 0:
+            revenue_gap_share = (
+                self.platform.short_term_revenue - self.platform.long_term_revenue
+            ) / self.platform.short_term_revenue
+
+        current_step = int(self.steps)
+        conditions = {
+            "trust_collapse": mean_trust_value <= 0.50,
+            "social_contagion": mean_wom_value >= 0.22,
+            "churn_cascade": self.cumulative_churn >= 0.35,
+            "extractive_divergence": revenue_gap_share >= 0.20 and self.cumulative_churn >= 0.15,
+        }
+
+        for name, condition in conditions.items():
+            self._tipping_streaks[name] = self._tipping_streaks[name] + 1 if condition else 0
+            if (
+                not self.tipping_points[name]["triggered"]
+                and self._tipping_streaks[name] >= self.tipping_point_persistence
+            ):
+                self.tipping_points[name]["triggered"] = True
+                self.tipping_points[name]["step"] = current_step
 
     def get_latest_metrics(self) -> dict:
         df = self.datacollector.get_model_vars_dataframe()
@@ -203,12 +294,42 @@ class DarkPatternTrustModel(mesa.Model):
         selected_nodes = list(self.graph.nodes())
         nodes = []
         edges = []
+
+        nodes.append({
+            "nodeId": "platform",
+            "id": -1,
+            "nodeType": "platform",
+            "label": "Platform",
+            "trust": round(self.platform.reputation, 4),
+            "perceived_fairness": round(self.platform.reputation, 4),
+            "harm": 0.0,
+            "negative_wom": 0.0,
+            "active": True,
+            "last_exposure": round(self.platform.dark_pattern_intensity, 4),
+            "last_churn_probability": 0.0,
+            "reputation": round(self.platform.reputation, 4),
+            "dark_pattern_intensity": round(self.platform.dark_pattern_intensity, 4),
+            "customer_support_quality": round(self.platform.customer_support_quality, 4),
+        })
+
         for node_id in selected_nodes:
             agent = self.graph.nodes[node_id]["agent"]
-            nodes.append({"nodeId": int(node_id), **agent.to_snapshot()})
+            nodes.append({"nodeId": int(node_id), "nodeType": "user", **agent.to_snapshot()})
+            edges.append({"source": "platform", "target": int(node_id)})
         for src, dst in self.graph.edges():
             edges.append({"source": int(src), "target": int(dst)})
         return {"nodes": nodes, "edges": edges}
+
+    def get_tipping_points(self) -> dict:
+        return {
+            name: {
+                "label": point["label"],
+                "description": point["description"],
+                "triggered": bool(point["triggered"]),
+                "step": point["step"],
+            }
+            for name, point in self.tipping_points.items()
+        }
 
     def step(self):
         if self.steps >= self.max_steps:

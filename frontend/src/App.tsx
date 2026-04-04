@@ -1,10 +1,27 @@
+import { useEffect, useState } from 'react'
 import './styles.css'
 import { ChartsPanel } from './components/ChartsPanel'
 import { ControlPanel } from './components/ControlPanel'
 import { KpiCards } from './components/KpiCards'
 import { NetworkGraphPanel } from './components/NetworkGraphPanel'
 import { SimulationList } from './components/SimulationList'
+import { TippingPointsPanel } from './components/TippingPointsPanel'
 import { useSimulation } from './hooks/useSimulation'
+
+type ThemeMode = 'light' | 'dark'
+
+function getInitialTheme(): ThemeMode {
+  if (typeof window === 'undefined') {
+    return 'light'
+  }
+
+  const storedTheme = window.localStorage.getItem('dark-patterns-theme')
+  if (storedTheme === 'light' || storedTheme === 'dark') {
+    return storedTheme
+  }
+
+  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+}
 
 export default function App() {
   const {
@@ -26,6 +43,12 @@ export default function App() {
     exportSimulation,
     deleteSimulation,
   } = useSimulation()
+  const [theme, setTheme] = useState<ThemeMode>(getInitialTheme)
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme
+    window.localStorage.setItem('dark-patterns-theme', theme)
+  }, [theme])
 
   return (
     <main className="app-shell">
@@ -37,6 +60,13 @@ export default function App() {
             A starter dashboard for exploring long-term trust erosion under dark patterns with a Python Mesa backend.
           </p>
         </div>
+        <button
+          className="theme-toggle secondary"
+          onClick={() => setTheme((current) => (current === 'dark' ? 'light' : 'dark'))}
+          type="button"
+        >
+          {theme === 'dark' ? 'Light mode' : 'Dark mode'}
+        </button>
       </header>
 
       {error ? <div className="error-banner">{error}</div> : null}
@@ -67,7 +97,8 @@ export default function App() {
           {state ? (
             <>
               <KpiCards metrics={state.metrics} platform={state.platform} steps={state.steps} maxSteps={state.max_steps} />
-              <ChartsPanel series={timeseries} />
+              <TippingPointsPanel tippingPoints={state.tipping_points} />
+              <ChartsPanel series={timeseries} tippingPoints={state.tipping_points} />
               <NetworkGraphPanel snapshot={state.network_snapshot} />
             </>
           ) : (

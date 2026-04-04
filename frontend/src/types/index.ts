@@ -30,8 +30,10 @@ export interface Metrics {
 }
 
 export interface NetworkNode {
-  nodeId: number
+  nodeId: number | string
   id: number
+  nodeType: 'user' | 'platform'
+  label?: string
   trust: number
   perceived_fairness: number
   harm: number
@@ -39,11 +41,14 @@ export interface NetworkNode {
   active: boolean
   last_exposure: number
   last_churn_probability: number
+  reputation?: number
+  dark_pattern_intensity?: number
+  customer_support_quality?: number
 }
 
 export interface NetworkEdge {
-  source: number
-  target: number
+  source: number | string
+  target: number | string
 }
 
 export interface NetworkSnapshot {
@@ -60,6 +65,13 @@ export interface PlatformState {
   long_term_revenue: number
 }
 
+export interface TippingPointState {
+  label: string
+  description: string
+  triggered: boolean
+  step: number | null
+}
+
 export interface SimulationState {
   simulation_id: string
   steps: number
@@ -68,6 +80,7 @@ export interface SimulationState {
   metrics: Metrics
   network_snapshot: NetworkSnapshot
   platform: PlatformState
+  tipping_points: Record<string, TippingPointState>
 }
 
 export interface SimulationSummary {

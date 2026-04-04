@@ -41,6 +41,7 @@ class SimulationStateResponse(BaseModel):
     metrics: dict
     network_snapshot: dict
     platform: dict
+    tipping_points: dict
 
 
 class SimulationTimeseriesResponse(BaseModel):
