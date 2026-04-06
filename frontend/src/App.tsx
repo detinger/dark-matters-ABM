@@ -55,9 +55,9 @@ export default function App() {
       <header className="hero">
         <div>
           <p className="eyebrow">Mesa + FastAPI + React</p>
-          <h1>Dark Patterns ABM Dashboard</h1>
+          <h1>Dark Patterns ABM Simulation</h1>
           <p className="hero-copy">
-            A starter dashboard for exploring long-term trust erosion under dark patterns with a Python Mesa backend.
+            A dashboard for exploring long-term trust erosion under dark patterns with Python Mesa backend.
           </p>
         </div>
         <button
@@ -109,7 +109,7 @@ export default function App() {
           ) : (
             <section className="panel empty-state">
               <h2>No simulation loaded</h2>
-              <p>Create a simulation from the left panel to begin.</p>
+              <p>Create a simulation from the panel to begin.</p>
             </section>
           )}
         </div>
