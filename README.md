@@ -467,10 +467,31 @@ The repository includes a starter batch runner in:
 backend/app/experiments.py
 ```
 
+Before running batch experiments, make sure the backend virtual environment exists and the Python dependencies are installed. Otherwise you may see errors such as `ModuleNotFoundError: No module named 'pandas'`.
+
 Run it from the `backend/` folder:
 
 ```bash
+cd backend
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
 python -m app.experiments
+```
+
+If the virtual environment is already set up, you only need:
+
+```bash
+cd backend
+source .venv/bin/activate
+python -m app.experiments
+```
+
+You can also run it without activating the environment:
+
+```bash
+cd backend
+.venv/bin/python -m app.experiments
 ```
 
 The script writes results to:
