@@ -108,3 +108,13 @@ export interface TimeseriesResponse {
   simulation_id: string
   series: Array<Record<string, number>>
 }
+
+export type LiveTransport = 'websocket' | 'polling'
+
+export interface LiveStreamPayload {
+  event: 'snapshot' | 'tick' | 'complete' | 'error'
+  message?: string
+  state?: SimulationState
+  series?: TimeseriesResponse['series']
+  simulations?: SimulationSummary[]
+}

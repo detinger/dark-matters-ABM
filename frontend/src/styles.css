@@ -225,6 +225,23 @@ label { display: flex; flex-direction: column; gap: 0.35rem; font-size: 0.95rem;
 .live-speed-control {
   margin-top: 1rem;
 }
+.live-transport-control {
+  margin-bottom: 0.85rem;
+}
+.transport-label {
+  display: block;
+  margin-bottom: 0.45rem;
+  color: var(--text-soft);
+  font-size: 0.95rem;
+}
+.transport-toggle {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.6rem;
+}
+.transport-toggle button {
+  width: 100%;
+}
 .range-meta {
   display: flex;
   align-items: center;

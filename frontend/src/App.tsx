@@ -32,6 +32,7 @@ export default function App() {
     loading,
     liveRunning,
     liveSpeed,
+    liveTransport,
     error,
     derived,
     createSimulation,
@@ -39,6 +40,7 @@ export default function App() {
     stepSimulation,
     resetSimulation,
     setLiveSpeed,
+    setLiveTransport,
     toggleLiveSimulation,
     exportSimulation,
     deleteSimulation,
@@ -80,10 +82,12 @@ export default function App() {
             onToggleLive={toggleLiveSimulation}
             onExport={exportSimulation}
             onLiveSpeedChange={setLiveSpeed}
+            onLiveTransportChange={setLiveTransport}
             disabled={loading}
             hasSimulation={derived.hasSimulation}
             liveRunning={liveRunning}
             liveSpeed={liveSpeed}
+            liveTransport={liveTransport}
           />
           <SimulationList
             simulations={simulations}

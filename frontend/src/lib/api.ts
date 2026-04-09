@@ -35,6 +35,10 @@ async function download(path: string): Promise<Blob> {
   return response.blob()
 }
 
+function getApiUrl(path: string) {
+  return new URL(`${API_BASE}${path}`, window.location.origin)
+}
+
 export const api = {
   listSimulations: () => request<SimulationSummary[]>('/simulations'),
   createSimulation: (payload: SimulationCreateRequest) =>
@@ -60,4 +64,10 @@ export const api = {
     request<{ message: string }>(`/simulations/${simulationId}`, {
       method: 'DELETE',
     }),
+  getLiveSimulationWebSocketUrl: (simulationId: string, intervalMs: number) => {
+    const url = getApiUrl(`/simulations/${simulationId}/live`)
+    url.protocol = url.protocol === 'https:' ? 'wss:' : 'ws:'
+    url.searchParams.set('interval_ms', String(intervalMs))
+    return url.toString()
+  },
 }

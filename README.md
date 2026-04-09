@@ -5,7 +5,7 @@ A full-stack project for exploring **agent-based simulations of dark patterns an
 This repository gives you a clean foundation for a research prototype where:
 
 - **Mesa** handles the simulation model in Python
-- **FastAPI** exposes the simulation through a REST API
+- **FastAPI** exposes the simulation through REST endpoints plus a live WebSocket stream
 - **React + TypeScript + Vite** provide a modern dashboard UI
 - **Mesa + SolaraViz** are available as an optional original Mesa frontend
 - **Recharts** renders time-series charts
@@ -39,7 +39,7 @@ The project is intentionally designed as a **starter**: it already runs, but it 
 - Tipping-point status panel
 - Time-series charts
 - Full-network visualization with platform node, live legend, colored trust states, and always-on animated interaction effects
-- Live run mode with speed slider
+- Live run mode with speed slider and selectable `WebSocket` or `Polling` transport
 - CSV export button for the active simulation
 - Session list for loading/deleting in-memory runs
 
@@ -115,6 +115,7 @@ Responsible for:
 - storing in-memory model instances
 - stepping or resetting simulations
 - serializing state for the UI
+- streaming live ticks to the dashboard over WebSocket
 
 #### React layer
 Responsible for:
@@ -273,6 +274,17 @@ Resets the existing session using its original parameters.
 `GET /simulations/{simulation_id}/timeseries`
 
 Returns a list of data points from Mesa `DataCollector`.
+
+### Live simulation stream
+`WS /simulations/{simulation_id}/live?interval_ms=280`
+
+Streams live updates for the selected simulation. Each message includes:
+- event type such as `snapshot`, `tick`, `complete`, or `error`
+- current simulation state
+- full time-series data
+- updated simulation list metadata
+
+The React dashboard uses this endpoint when `WebSocket` is selected as the live transport. `Polling` remains available as a fallback mode.
 
 ### Export CSV
 `GET /simulations/{simulation_id}/export.csv`
@@ -448,6 +460,9 @@ This mode reuses the same `DarkPatternTrustModel`, keeps the platform visible in
    - `Run -10`
    - `Run +10`
    - `Run Live`
+6. Choose the live transport in the control panel:
+   - `WebSocket` for the default low-overhead live stream
+   - `Polling` if you want to compare behavior or need a simpler fallback
 
 ### Mesa SolaraViz path
 
@@ -540,7 +555,6 @@ Possible upgrades:
 - add persistent storage for simulation metadata
 - save results to Postgres or Redis (I don't need that for now)
 - add background jobs for long experiments
-- add WebSocket streaming for live runs (current live mode uses repeated HTTP stepping)
 - add authentication if needed
 
 ### 3. Improve frontend UX
@@ -577,6 +591,7 @@ Current limitations include:
 - metrics are illustrative and not empirically calibrated
 - there is no authentication or persistence layer
 - long experiment execution is synchronous
+- live WebSocket updates still send full state payloads on each tick rather than smaller diffs
 - the full animated network can become visually and computationally heavy at large population sizes
 
 
@@ -615,6 +630,12 @@ Check:
 - backend is running
 - `frontend/.env` has the correct `VITE_API_BASE`
 - browser console and FastAPI logs for errors
+
+### WebSocket live mode disconnects
+Check:
+- backend is running on `http://localhost:8000`
+- the browser can reach `ws://localhost:8000/api/...`
+- you can switch the live transport to `Polling` as a fallback if the socket is interrupted
 
 ### Simulation disappears
 That is expected if the backend restarts because sessions are stored in memory.
