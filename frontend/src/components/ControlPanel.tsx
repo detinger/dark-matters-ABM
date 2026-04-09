@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import type { SimulationCreateRequest } from '../types'
 import { defaultCreatePayload } from '../hooks/useSimulation'
+import type { LiveTransport } from '../types'
 
 type Props = {
   onCreate: (payload: SimulationCreateRequest) => Promise<void>
@@ -9,10 +10,12 @@ type Props = {
   onToggleLive: () => Promise<void>
   onExport: () => Promise<void>
   onLiveSpeedChange: (value: number) => void
+  onLiveTransportChange: (value: LiveTransport) => void
   disabled?: boolean
   hasSimulation: boolean
   liveRunning: boolean
   liveSpeed: number
+  liveTransport: LiveTransport
 }
 
 export function ControlPanel({
@@ -22,10 +25,12 @@ export function ControlPanel({
   onToggleLive,
   onExport,
   onLiveSpeedChange,
+  onLiveTransportChange,
   disabled,
   hasSimulation,
   liveRunning,
   liveSpeed,
+  liveTransport,
 }: Props) {
   const [form, setForm] = useState<SimulationCreateRequest>(defaultCreatePayload)
 
@@ -107,6 +112,25 @@ export function ControlPanel({
       </div>
 
       <div className="control-group live-speed-control">
+        <div className="live-transport-control">
+          <span className="transport-label">Live transport</span>
+          <div className="transport-toggle" role="radiogroup" aria-label="Live transport">
+            <button
+              className={liveTransport === 'websocket' ? '' : 'secondary'}
+              type="button"
+              onClick={() => onLiveTransportChange('websocket')}
+            >
+              WebSocket
+            </button>
+            <button
+              className={liveTransport === 'polling' ? '' : 'secondary'}
+              type="button"
+              onClick={() => onLiveTransportChange('polling')}
+            >
+              Polling
+            </button>
+          </div>
+        </div>
         <label>
           Live speed
           <input
@@ -120,7 +144,7 @@ export function ControlPanel({
           <div className="range-meta">
             <span>Slower</span>
             <strong>{liveSpeed}/10</strong>
-            <span>Faster</span>
+            <span>{liveTransport === 'websocket' ? 'Socket stream' : 'HTTP polling'}</span>
           </div>
         </label>
       </div>

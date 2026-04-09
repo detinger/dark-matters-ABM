@@ -1,9 +1,10 @@
 from __future__ import annotations
 
+import asyncio
 import csv
 from io import StringIO
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.responses import Response
 
 from app.schemas.simulation import (
@@ -18,6 +19,15 @@ from app.schemas.simulation import (
 from app.simulation.service import simulation_service
 
 router = APIRouter()
+
+
+def _serialize_simulation_summary(session, simulation_id: str) -> dict:
+    return {
+        "simulation_id": simulation_id,
+        "steps": session.model.steps,
+        "max_steps": session.model.max_steps,
+        "params": session.params,
+    }
 
 
 def _serialize_simulation_state(session, simulation_id: str) -> dict:
@@ -41,6 +51,15 @@ def _serialize_simulation_state(session, simulation_id: str) -> dict:
     }
 
 
+def _serialize_live_payload(session, simulation_id: str, event: str) -> dict:
+    return {
+        "event": event,
+        "state": _serialize_simulation_state(session, simulation_id),
+        "series": session.model.get_timeseries(),
+        "simulations": simulation_service.list_simulations(),
+    }
+
+
 @router.get("/health", response_model=HealthResponse)
 def healthcheck():
     return {"status": "ok"}
@@ -54,12 +73,7 @@ def list_simulations():
 @router.post("/simulations", response_model=SimulationSummary)
 def create_simulation(payload: SimulationCreateRequest):
     session = simulation_service.create(payload.model_dump())
-    return {
-        "simulation_id": session.simulation_id,
-        "steps": session.model.steps,
-        "max_steps": session.model.max_steps,
-        "params": session.params,
-    }
+    return _serialize_simulation_summary(session, session.simulation_id)
 
 
 @router.get("/simulations/{simulation_id}", response_model=SimulationStateResponse)
@@ -133,3 +147,51 @@ def delete_simulation(simulation_id: str):
     except KeyError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     return {"message": f"Simulation '{simulation_id}' deleted."}
+
+
+@router.websocket("/simulations/{simulation_id}/live")
+async def stream_simulation_live(
+    websocket: WebSocket,
+    simulation_id: str,
+):
+    await websocket.accept()
+
+    try:
+        session = simulation_service.get(simulation_id)
+    except KeyError:
+        await websocket.send_json({"event": "error", "message": f"Simulation '{simulation_id}' not found"})
+        await websocket.close(code=1008)
+        return
+
+    try:
+        raw_interval = websocket.query_params.get("interval_ms", "280")
+        interval_ms = max(40, min(2000, int(raw_interval)))
+    except ValueError:
+        await websocket.send_json({"event": "error", "message": "interval_ms must be an integer"})
+        await websocket.close(code=1008)
+        return
+
+    try:
+        await websocket.send_json(_serialize_live_payload(session, simulation_id, "snapshot"))
+
+        while True:
+            if session.model.steps >= session.model.max_steps:
+                await websocket.send_json(_serialize_live_payload(session, simulation_id, "complete"))
+                await websocket.close(code=1000)
+                return
+
+            await asyncio.sleep(interval_ms / 1000)
+            try:
+                session = simulation_service.step(simulation_id, 1)
+            except KeyError:
+                await websocket.send_json({"event": "error", "message": f"Simulation '{simulation_id}' no longer exists"})
+                await websocket.close(code=1008)
+                return
+            event = "complete" if session.model.steps >= session.model.max_steps else "tick"
+            await websocket.send_json(_serialize_live_payload(session, simulation_id, event))
+
+            if event == "complete":
+                await websocket.close(code=1000)
+                return
+    except WebSocketDisconnect:
+        return

@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import { api } from '../lib/api'
 import type {
+  LiveStreamPayload,
+  LiveTransport,
   SimulationCreateRequest,
   SimulationState,
   SimulationSummary,
@@ -24,6 +26,10 @@ export const defaultCreatePayload: SimulationCreateRequest = {
   review_visibility: 0.35,
 }
 
+function getLiveDelayMs(liveSpeed: number) {
+  return Math.max(80, 760 - liveSpeed * 80)
+}
+
 export function useSimulation() {
   const [simulations, setSimulations] = useState<SimulationSummary[]>([])
   const [currentSimulationId, setCurrentSimulationId] = useState<string | null>(null)
@@ -32,7 +38,20 @@ export function useSimulation() {
   const [loading, setLoading] = useState(false)
   const [liveRunning, setLiveRunning] = useState(false)
   const [liveSpeed, setLiveSpeed] = useState(6)
+  const [liveTransport, setLiveTransport] = useState<LiveTransport>('websocket')
   const [error, setError] = useState<string | null>(null)
+
+  const applyLivePayload = (payload: LiveStreamPayload) => {
+    if (payload.state) {
+      setState(payload.state)
+    }
+    if (payload.series) {
+      setTimeseries(payload.series)
+    }
+    if (payload.simulations) {
+      setSimulations(payload.simulations)
+    }
+  }
 
   const refreshList = async () => {
     const list = await api.listSimulations()
@@ -170,13 +189,14 @@ export function useSimulation() {
 
   useEffect(() => {
     if (!liveRunning || !currentSimulationId || !state) return
+    if (liveTransport !== 'polling') return
     if (state.steps >= state.max_steps) {
       setLiveRunning(false)
       return
     }
 
     let cancelled = false
-    const liveDelayMs = Math.max(80, 760 - liveSpeed * 80)
+    const liveDelayMs = getLiveDelayMs(liveSpeed)
     const timeoutId = window.setTimeout(async () => {
       try {
         const simulationState = await api.stepSimulation(currentSimulationId, 1)
@@ -203,7 +223,70 @@ export function useSimulation() {
       cancelled = true
       window.clearTimeout(timeoutId)
     }
-  }, [currentSimulationId, liveRunning, liveSpeed, state])
+  }, [currentSimulationId, liveRunning, liveSpeed, liveTransport, state])
+
+  useEffect(() => {
+    if (!liveRunning || !currentSimulationId || !state) return
+    if (liveTransport !== 'websocket') return
+    if (state.steps >= state.max_steps) {
+      setLiveRunning(false)
+      return
+    }
+
+    let cancelled = false
+    let finished = false
+    const socket = new WebSocket(
+      api.getLiveSimulationWebSocketUrl(currentSimulationId, getLiveDelayMs(liveSpeed)),
+    )
+
+    socket.onmessage = (event) => {
+      if (cancelled) return
+
+      let payload: LiveStreamPayload
+      try {
+        payload = JSON.parse(event.data) as LiveStreamPayload
+      } catch {
+        setError('Received an invalid WebSocket payload')
+        setLiveRunning(false)
+        socket.close()
+        return
+      }
+
+      if (payload.event === 'error') {
+        finished = true
+        setError(payload.message ?? 'WebSocket live stream failed')
+        setLiveRunning(false)
+        socket.close()
+        return
+      }
+
+      applyLivePayload(payload)
+
+      if (payload.event === 'complete') {
+        finished = true
+        setLiveRunning(false)
+      }
+    }
+
+    socket.onerror = () => {
+      if (cancelled || finished) return
+      finished = true
+      setError('WebSocket live stream failed; switch to polling or retry.')
+      setLiveRunning(false)
+    }
+
+    socket.onclose = () => {
+      if (cancelled || finished) return
+      finished = true
+      setError('WebSocket live stream disconnected unexpectedly.')
+      setLiveRunning(false)
+    }
+
+    return () => {
+      cancelled = true
+      socket.close()
+    }
+  }, [currentSimulationId, liveRunning, liveSpeed, liveTransport])
 
   const derived = useMemo(() => {
     const latest = timeseries[timeseries.length - 1]
@@ -221,6 +304,7 @@ export function useSimulation() {
     loading,
     liveRunning,
     liveSpeed,
+    liveTransport,
     error,
     derived,
     createSimulation,
@@ -228,6 +312,7 @@ export function useSimulation() {
     stepSimulation,
     resetSimulation,
     setLiveSpeed,
+    setLiveTransport,
     toggleLiveSimulation,
     exportSimulation,
     deleteSimulation,
