@@ -2,7 +2,7 @@
 
 Everything needed to submit *"Simulating the Long-Term Impact of Dark Patterns on User Trust: A Network-Based Agent-Based Model"* to the Elsevier journal **Technology in Society** (ISSN 0160-791X), together with a full, journal-grade **replication package** (data + code) that re-generates every result from the simulation.
 
-**Authors:** Dejana Pivac (`dpivac@fipu.hr`), Darko Etinger (`darko.etinger@unipu.hr`) — Faculty of Informatics, Juraj Dobrila University of Pula, Pula, Croatia.
+**Authors:** Darko Etinger (`darko.etinger@unipu.hr`), Dejana Pivac (`dpivac@unipu.hr`) — Faculty of Informatics, Juraj Dobrila University of Pula, Pula, Croatia.
 
 ## Folder structure
 

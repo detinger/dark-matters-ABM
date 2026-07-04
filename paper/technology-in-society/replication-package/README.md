@@ -1,6 +1,6 @@
 # Replication Package — Simulating the Long-Term Impact of Dark Patterns on User Trust: A Network-Based Agent-Based Model
 
-**Authors:** Dejana Pivac (<dpivac@fipu.hr>) and Darko Etinger (<darko.etinger@unipu.hr>)
+**Authors:** Darko Etinger (<darko.etinger@unipu.hr>) and Dejana Pivac (<dpivac@unipu.hr>)
 Faculty of Informatics, Juraj Dobrila University of Pula, Pula, Croatia
 
 This is the complete replication package for the manuscript submitted to *Technology in Society*
@@ -172,10 +172,10 @@ You are free to reuse, adapt, and redistribute both, provided you retain the cop
 If you use this model, data, or replication package, please cite both the article and the archived
 package:
 
-> Pivac, Dejana, and Darko Etinger. 2026. "Simulating the Long-Term Impact of Dark Patterns on
+> Etinger, Darko, and Dejana Pivac. 2026. "Simulating the Long-Term Impact of Dark Patterns on
 > User Trust: A Network-Based Agent-Based Model." *Technology in Society*. [DOI to be assigned on acceptance].
 
-> Pivac, Dejana, and Darko Etinger. 2026. *Dark Patterns ABM — Replication Package* (version 1.0)
+> Etinger, Darko, and Dejana Pivac. 2026. *Dark Patterns ABM — Replication Package* (version 1.0)
 > [Software and data]. Zenodo. https://doi.org/10.5281/zenodo.XXXXXXX  *(placeholder — replaced
 > with the Zenodo DOI on deposit; a mirror is also archived at the CoMSES Net Computational Model
 > Library)*.

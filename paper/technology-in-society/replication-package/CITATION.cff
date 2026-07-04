@@ -8,16 +8,16 @@ abstract: >-
   figure in the accompanying "Technology in Society" manuscript from the
   simulation model via a single deterministic entry point (reproduce.py).
 authors:
-  - given-names: Dejana
-    family-names: Pivac
-    email: dpivac@fipu.hr
-    affiliation: "Faculty of Informatics, Juraj Dobrila University of Pula"
-    # orcid: "https://orcid.org/<ORCID_PIVAC>"   # TODO: add ORCID before deposit
   - given-names: Darko
     family-names: Etinger
     email: darko.etinger@unipu.hr
     affiliation: "Faculty of Informatics, Juraj Dobrila University of Pula"
-    # orcid: "https://orcid.org/<ORCID_ETINGER>" # TODO: add ORCID before deposit
+    orcid: "https://orcid.org/0000-0003-4444-7202"
+  - given-names: Dejana
+    family-names: Pivac
+    email: dpivac@unipu.hr
+    affiliation: "Faculty of Informatics, Juraj Dobrila University of Pula"
+    # orcid: "https://orcid.org/<ORCID_PIVAC>"   # TODO: add ORCID before deposit
 license: MIT
 version: 1.0.0
 date-released: "2026-06-21"

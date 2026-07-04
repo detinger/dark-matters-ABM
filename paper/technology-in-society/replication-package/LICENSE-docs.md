@@ -31,7 +31,7 @@ This includes, but is not limited to:
 When you reuse, adapt, or redistribute any of the CC BY 4.0 material, please
 credit the authors as follows:
 
-> Pivac, Dejana, and Darko Etinger. 2026. *Dark Patterns ABM: replication
+> Etinger, Darko, and Dejana Pivac. 2026. *Dark Patterns ABM: replication
 > package.* Faculty of Informatics, Juraj Dobrila University of Pula, Pula,
 > Croatia. <GITHUB_URL> / <ZENODO_DOI>
 

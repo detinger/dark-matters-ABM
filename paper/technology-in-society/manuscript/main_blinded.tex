@@ -28,26 +28,14 @@
 \begin{document}
 
 \shorttitle{Dark Patterns as a Value-Destroying Strategy}
-\shortauthors{D. Etinger and D. Pivac}
+\shortauthors{Anonymous}
 
 \title[mode=title]{Dark Patterns as a Value-Destroying Strategy: An Agent-Based Network Model of Trust, Social Contagion, and Platform Sustainability}
 
-\author[1]{Darko Etinger}
+% Author details redacted for double-blind review.
+\author[1]{[Redacted for double-blind review]}
 \cormark[1]
-\fnmark[1]
-\ead{darko.etinger@unipu.hr}
-\ead[orcid]{https://orcid.org/0000-0003-4444-7202}
-
-\author[1]{Dejana Pivac}
-\fnmark[1]
-\ead{dpivac@unipu.hr}
-
-\affiliation[1]{organization={Faculty of Informatics, Juraj Dobrila University of Pula},
-                city={Pula},
-                country={Croatia}}
-
 \cortext[1]{Corresponding author.}
-\fntext[1]{These authors contributed equally to this work.}
 
 \begin{abstract}
 Dark patterns are deceptive interface design strategies that manipulate users into unintended decisions, yet their long-term systemic effects on user trust, platform reputation, and economic sustainability remain poorly understood. Existing research focuses predominantly on cross-sectional detection and classification of dark patterns, with limited attention to their cumulative and emergent consequences over time. This paper presents a stochastic, network-based agent-based model (ABM) that simulates the long-term dynamics of trust erosion caused by dark patterns in digital platforms. The model incorporates heterogeneous user agents with type-driven behavioral traits, per-pattern exposure--detection--harm pipelines, social contagion through negative word-of-mouth, logistic churn mechanics, and platform-level reputation and economics. Across seven scenarios simulated over \maxSteps\ time steps (six years) and replicated over \numReplicates\ random seeds, even low-intensity dark patterns trigger trust collapse (at step \lowCollapseStep) and extractive divergence, while medium intensity triggers all four formal tipping points and high intensity drives \highChurn\ cumulative churn and near-total trust destruction. The model formalizes four tipping points and demonstrates that dark patterns trade short-term revenue gains for a self-reinforcing, contagion-driven erosion of trust that destroys greater value over the long run. These findings contribute a computational framework for reasoning about the systemic harms of deceptive design and offer implications for regulatory policy and platform governance.
@@ -313,13 +301,28 @@ Three directions for future work follow directly from the model's current scope.
 % =====================================================================
 % Journal-required declarations (CRediT, competing interest, funding, GenAI).
 % =====================================================================
-\input{declarations}
+\section*{CRediT authorship contribution statement}
+[Redacted for double-blind review.]
+
+\section*{Declaration of competing interest}
+The authors declare that they have no known competing financial interests or
+personal relationships that could have appeared to influence the work reported
+in this paper.
+
+\section*{Funding}
+[Redacted for double-blind review.]
+
+\section*{Declaration of generative AI and AI-assisted technologies in the writing process}
+During the preparation of this work the authors used Claude Opus 4.8 in order
+to improve readability and language. After using this tool/service, the authors
+reviewed and edited the content as needed and take full responsibility for the
+content of the published article.
 
 % =====================================================================
 \section*{Data and Code Availability}
 \label{sec:availability}
 % =====================================================================
-The complete source code of the model, the experiment driver (\texttt{reproduce.py}), the pinned computational environment, and all raw and processed data required to regenerate every table and figure in this article are openly available at \url{https://github.com/detinger/dark-patterns-ABM}. See the package \texttt{REPRODUCTION.md} for exact reproduction instructions.
+The complete source code of the model, the experiment driver (\texttt{reproduce.py}), the pinned computational environment, and all raw and processed data required to regenerate every table and figure in this article are openly available at [URL redacted for double-blind review]. See the package \texttt{REPRODUCTION.md} for exact reproduction instructions.
 
 \bibliographystyle{cas-model2-names}
 \bibliography{references}
