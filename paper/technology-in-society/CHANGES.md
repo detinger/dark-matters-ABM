@@ -147,7 +147,7 @@ Required preamble additions: `\usepackage{tikz}`, `\usetikzlibrary{positioning,a
 
 ## 8. Data and Code Availability (`main.tex`)
 
-GitHub URL was incorrect (`dark-matters-ABM` → `dark-patterns-ABM`). Zenodo placeholder removed; statement now follows the Elsevier template for repositories without DOIs. CoMSES reference removed pending actual archival.
+GitHub URL was corrected to `dark-patterns-ABM`. Zenodo placeholder removed; statement now follows the Elsevier template for repositories without DOIs. CoMSES reference removed pending actual archival.
 
 **Current statement points to:** `https://github.com/detinger/dark-patterns-ABM`
 

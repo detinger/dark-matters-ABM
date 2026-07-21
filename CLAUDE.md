@@ -194,7 +194,7 @@ Logistic in trust deficit, harm, negative WOM, and (protective) switching cost. 
 - `VERSION_NOTES.md` — changelog
 - `docs/superpowers/{plans,specs}/` — design notes for recent mechanics (reputation-discounted revenue, WOM/trust tuning)
 - `paper/` — the thesis this model backs (PDF, Markdown, LaTeX source under `fipu-thesis/`)
-- `dark-matters-ABM-COLAB.ipynb` — Colab notebook for running the model
+- `dark-patterns-ABM-COLAB.ipynb` — Colab notebook for running the model
 
 ## Running in Docker
 Not set up yet. To containerize, add a backend `Dockerfile`, a frontend `Dockerfile` (or multi-stage build), and a `docker-compose.yml`. Docker is not required for local development.

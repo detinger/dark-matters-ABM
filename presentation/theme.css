@@ -1,0 +1,310 @@
+/* @theme dpabm */
+/* Custom Marp theme for "Dark Patterns as a Value-Destroying Strategy" */
+
+@import 'default';
+
+:root {
+  --navy: #0B2545;
+  --navy-2: #13315C;
+  --teal: #0E9594;
+  --teal-light: #E3F5F4;
+  --red: #C7443B;
+  --red-light: #FBEAE9;
+  --gold: #C98A2B;
+  --ink: #1B2430;
+  --muted: #5A6472;
+  --paper: #FBFAF8;
+  --line: #DFE3E8;
+}
+
+section {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: 'Helvetica Neue', 'Segoe UI', Arial, sans-serif;
+  font-size: 26px;
+  padding: 48px 64px;
+  line-height: 1.45;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+}
+
+/* ---------- Headings ---------- */
+h1 {
+  color: var(--navy);
+  font-size: 1.55em;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  border-bottom: 4px solid var(--teal);
+  padding-bottom: 0.22em;
+  margin-top: 0;
+  margin-bottom: 0.55em;
+}
+
+h2 {
+  color: var(--navy-2);
+  font-size: 1.15em;
+  font-weight: 700;
+  margin-bottom: 0.4em;
+}
+
+h3 {
+  color: var(--teal);
+  font-size: 0.95em;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+p, li { color: var(--ink); }
+
+strong { color: var(--navy); }
+
+a { color: var(--teal); }
+
+/* ---------- Lists ---------- */
+ul > li::marker { color: var(--teal); }
+ol > li::marker { color: var(--teal); font-weight: 700; }
+
+/* ---------- Tables ---------- */
+table {
+  font-size: 0.62em;
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.4em 0;
+  box-shadow: 0 1px 3px rgba(11,37,69,0.08);
+}
+thead th {
+  background: var(--navy);
+  color: #fff;
+  font-weight: 700;
+  padding: 0.5em 0.7em;
+  text-align: left;
+  border: none;
+}
+tbody td {
+  padding: 0.45em 0.7em;
+  border-bottom: 1px solid var(--line);
+}
+tbody tr:nth-child(even) { background: #F1F3F5; }
+tbody tr:last-child td { border-bottom: 2px solid var(--navy); }
+
+/* ---------- Footer / page number ---------- */
+section::after {
+  color: var(--muted);
+  font-size: 0.5em;
+  font-weight: 600;
+}
+
+/* ---------- Title slide ---------- */
+section.title {
+  background: linear-gradient(160deg, var(--navy) 0%, var(--navy-2) 62%, var(--teal) 100%);
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+section.title h1 {
+  color: #fff;
+  font-size: 1.9em;
+  border-bottom: none;
+  line-height: 1.25;
+}
+section.title h2 {
+  color: var(--teal-light);
+  font-weight: 400;
+  font-size: 0.95em;
+  margin-top: 0.3em;
+}
+section.title .authors {
+  margin-top: 1.6em;
+  font-size: 0.68em;
+  color: #E9EEF5;
+}
+section.title .authors strong {
+  color: #ffffff;
+}
+section.title .affil {
+  font-size: 0.55em;
+  color: #AFC2DA;
+  margin-top: 0.3em;
+}
+section.title .kicker {
+  font-size: 0.55em;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--gold);
+  font-weight: 700;
+  margin-bottom: 0.3em;
+}
+
+/* ---------- Section divider slides ---------- */
+section.divider {
+  background: var(--navy);
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+section.divider h1 {
+  color: #fff;
+  border-bottom: none;
+  font-size: 2em;
+}
+section.divider .kicker {
+  color: var(--teal);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  font-size: 0.55em;
+  font-weight: 700;
+}
+
+/* ---------- Lead / stat slides ---------- */
+section.stats {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.stat-row {
+  display: flex;
+  gap: 24px;
+  margin-top: 0.6em;
+}
+.stat-card {
+  flex: 1;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-top: 6px solid var(--teal);
+  border-radius: 10px;
+  padding: 18px 20px;
+  box-shadow: 0 2px 8px rgba(11,37,69,0.08);
+}
+.stat-card.alert { border-top-color: var(--red); }
+.stat-card.gold { border-top-color: var(--gold); }
+.stat-card .num {
+  font-size: 1.7em;
+  font-weight: 800;
+  color: var(--navy);
+  line-height: 1.1;
+}
+.stat-card.alert .num { color: var(--red); }
+.stat-card .label {
+  font-size: 0.55em;
+  color: var(--muted);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin-top: 0.3em;
+}
+
+/* ---------- Two-column layout ---------- */
+.columns {
+  display: flex;
+  gap: 36px;
+  align-items: flex-start;
+}
+.columns > div { flex: 1; }
+
+/* ---------- Callout / quote boxes ---------- */
+.callout {
+  background: var(--teal-light);
+  border-left: 5px solid var(--teal);
+  border-radius: 6px;
+  padding: 14px 20px;
+  font-size: 0.78em;
+  color: var(--navy-2);
+  margin: 0.5em 0;
+}
+.callout.warn {
+  background: var(--red-light);
+  border-left-color: var(--red);
+  color: #7A2620;
+}
+
+/* ---------- Badges / pills ---------- */
+.pill {
+  display: inline-block;
+  background: var(--navy);
+  color: #fff;
+  border-radius: 999px;
+  padding: 0.15em 0.9em;
+  font-size: 0.5em;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  margin-bottom: 0.5em;
+}
+.pill.teal { background: var(--teal); }
+.pill.red { background: var(--red); }
+.pill.gold { background: var(--gold); }
+
+/* ---------- Figures ---------- */
+.fig-cap {
+  font-size: 0.48em;
+  color: var(--muted);
+  text-align: center;
+  margin-top: 0.2em;
+}
+
+/* ---------- Flow diagram boxes ---------- */
+.flow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 0.6em;
+}
+.flow-box {
+  background: #fff;
+  border: 2px solid var(--navy);
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 0.55em;
+  font-weight: 700;
+  color: var(--navy);
+  text-align: center;
+  min-width: 110px;
+}
+.flow-box.loop {
+  border-color: var(--red);
+  color: var(--red);
+}
+.flow-arrow {
+  font-size: 0.9em;
+  color: var(--teal);
+  font-weight: 900;
+}
+
+/* ---------- Dedicated figure slides ---------- */
+section.figure {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+section.figure img {
+  display: block;
+  margin: 0.2em auto 0 auto;
+  max-height: 60vh;
+  width: auto;
+}
+
+/* ---------- bg-right split slides ---------- */
+section.split h1 { margin-bottom: 0.4em; }
+
+/* ---------- Small text / source lines ---------- */
+.source {
+  font-size: 0.42em;
+  color: var(--muted);
+  margin-top: 0.8em;
+}
+
+/* footer brand */
+header {
+  color: var(--muted);
+  font-size: 0.4em;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}

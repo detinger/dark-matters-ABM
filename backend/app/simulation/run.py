@@ -237,7 +237,7 @@ def print_summary(data, scenario_name: str, tipping_result: dict) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="Run a single Dark-Matters ABM scenario.",
+        description="Run a single Dark Patterns ABM scenario.",
     )
     parser.add_argument(
         "--scenario",

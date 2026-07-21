@@ -55,7 +55,7 @@ import pandas as pd
 # Paths: make the backend model package importable (single source of truth).
 # --------------------------------------------------------------------------
 SCRIPT_DIR = Path(__file__).resolve().parent
-REPO_ROOT = SCRIPT_DIR.parents[2]          # .../dark-matters-ABM
+REPO_ROOT = SCRIPT_DIR.parents[2]          # .../dark-patterns-ABM
 BACKEND_DIR = REPO_ROOT / "backend"
 if str(BACKEND_DIR) not in sys.path:
     sys.path.insert(0, str(BACKEND_DIR))

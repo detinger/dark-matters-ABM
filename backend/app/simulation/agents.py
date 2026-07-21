@@ -1,5 +1,5 @@
 """
-User and Platform agents for the Dark-Matters ABM simulation.
+User and Platform agents for the Dark Patterns ABM simulation.
 
 UserAgent  -- heterogeneous consumer with type-driven attributes, detection
               logic, trust/harm dynamics, and word-of-mouth behaviour.

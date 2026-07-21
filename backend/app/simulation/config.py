@@ -1,5 +1,5 @@
 """
-Combined configuration for the Dark-Matters ABM simulation.
+Combined configuration for the Dark Patterns ABM simulation.
 
 All named constants live here — no magic numbers elsewhere.
 Sections:

@@ -82,7 +82,7 @@ The project is intentionally designed as a **starter**: it already runs, but it 
 │   ├── tsconfig.json
 │   ├── tsconfig.node.json
 │   └── vite.config.ts
-├── dark-matters-ABM-COLAB.py
+├── dark-patterns-ABM-COLAB.ipynb
 ├── CALIBRATION_PLAN.md
 ├── .gitignore
 └── README.md

@@ -31,7 +31,7 @@ are released under the Creative Commons Attribution 4.0 International
 - `<ZENODO_DOI>` — the DOI minted when you publish the GitHub release to
   Zenodo (e.g. `https://doi.org/10.5281/zenodo.XXXXXXX`).
 - `<GITHUB_URL>` — the public repository URL
-  (e.g. `https://github.com/dejanapivac/dark-matters-ABM`).
+  (e.g. `https://github.com/detinger/dark-patterns-ABM`).
 
 Optional but recommended: also deposit the model in the CoMSES Net
 Computational Model Library (https://www.comses.net/) for a peer-reviewed model

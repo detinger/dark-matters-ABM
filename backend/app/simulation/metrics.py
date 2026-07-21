@@ -1,5 +1,5 @@
 """
-Data-collector reporter functions for the Dark-Matters ABM.
+Data-collector reporter functions for the Dark Patterns ABM.
 
 Every public function in this module takes a *model* instance and returns
 a single scalar value suitable for Mesa's ``DataCollector``.

@@ -1,5 +1,5 @@
 """
-Post-simulation analysis utilities for the Dark-Matters ABM.
+Post-simulation analysis utilities for the Dark Patterns ABM.
 
 Functions operate on DataFrames produced by Mesa's ``DataCollector``
 (one row per simulation step).  They are agnostic to the model itself
