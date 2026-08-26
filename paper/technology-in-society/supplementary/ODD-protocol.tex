@@ -4,6 +4,8 @@
 \usepackage{booktabs}
 \usepackage{amsmath}
 \usepackage{hyperref}
+\usepackage{microtype}
+\setlength\emergencystretch{3em}
 
 \hypersetup{
   colorlinks=true,
@@ -16,11 +18,7 @@
 \title{Supplementary Material: ODD Protocol Description of the\\
 Dark Patterns Trust-Erosion Agent-Based Model}
 
-\author{%
-Darko Etinger\thanks{Faculty of Informatics, Juraj Dobrila University of Pula, Pula, Croatia. \texttt{darko.etinger@unipu.hr}}
-\and
-Dejana Pivac\thanks{Faculty of Informatics, Juraj Dobrila University of Pula, Pula, Croatia. \texttt{dpivac@unipu.hr}}
-}
+\author{Anonymous Authors}
 
 \date{2026}
 
@@ -166,7 +164,7 @@ Trait & Skeptic & Naive & Activist \\
 clamped to $[0,1]$. ``Initial'' indicates the value at step 0.}
 \label{tab:dynamic}
 \small
-\begin{tabular}{lll}
+\begin{tabular}{lp{5.8cm}l}
 \toprule
 Variable & Meaning & Initial \\
 \midrule
@@ -181,7 +179,7 @@ Variable & Meaning & Initial \\
 \code{pattern\_exposure\_count} & per-pattern exposure counter (buildup ramp) & $0$ \\
 \code{active}                & membership flag (\code{False} once churned)    & \code{True} \\
 \code{received\_negative\_signal} & social signal staged for this step        & $0.0$ \\
-WOM counters                 & \code{negative\_wom\_sent/received}, \code{positive\_wom\_sent/received} & $0$ \\
+WOM counters                 & \code{neg/pos\_wom\_sent} and \code{neg/pos\_wom\_received} & $0$ \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -295,7 +293,7 @@ prescribed.
 
 \subsection{Adaptation}
 Adaptation is confined to the platform. When \code{adaptive\_platform} is
-\code{True}, \code{PlatformAgent.adapt\_strategy()} adjusts the platform's own
+\code{True}, the platform's \code{adapt\_strategy()} method adjusts its own
 behaviour in response to observed churn and reputation: if the per-step churn
 rate exceeds \code{CHURN\_ADAPTATION\_THRESHOLD}~$=0.05$, or the agent reputation
 drops below $0.55$, or the $0$--$100$ \code{platform\_reputation} drops below
@@ -369,7 +367,7 @@ at initialization. The network's small-world community structure is an emergent
 topological feature rather than an explicitly represented collective.
 
 \subsection{Observation}
-All observation is performed by Mesa's \code{DataCollector}, configured through
+All observation is performed by Mesa's \code{DataCollector}, configured in
 \code{build\_all\_reporters()} (Section~\ref{sub:observation}), which records a
 fixed set of model-level reporters at the end of every step: aggregate metrics
 (mean trust of active and of all users, mean harm, churn rate and cumulative
@@ -401,9 +399,9 @@ The model is initialized as follows (all randomness from the seeded RNG):
   \code{BETA\_SHAPE}~$=5.0$. Each user's \code{trust} and
   \code{perceived\_fairness} are set to its \code{trust\_baseline}; harm, WOM,
   and counters start at zero; \code{active} is \code{True}.
-  \item \textbf{Economics and reputation.} The cumulative revenue counter starts
-  at \code{INITIAL\_CUMULATIVE\_REVENUE}~$=10{,}000$ (the platform is assumed to
-  have prior traction). The initial $0$--$100$ \code{platform\_reputation} is
+  \item \textbf{Economics and reputation.} The platform's cumulative revenue
+  counter starts at \code{INITIAL\_CUMULATIVE\_REVENUE}~$=10{,}000$ (the
+  platform is assumed to have prior traction). The initial $0$--$100$ \code{platform\_reputation} is
   drawn \textbf{uniformly from $[50, 70]$} (\code{DEFAULT\_REPUTATION\_RANGE}).
 
   \emph{Important caveat.} Although each scenario preset in
@@ -489,12 +487,12 @@ rescaled to $[0,1]$-ish units by dividing by $100$ to give $h_{\text{scaled}}$.
 \paragraph{Exposure buildup.}
 To model habituation/ramp-in, the first
 \code{EXPOSURE\_BUILDUP\_STEPS}~$=3$ encounters with a given pattern deliver only
-partial harm. With $k$ the per-pattern exposure count, for $k <3$:
+partial harm (\code{INITIAL\_HARM\_FRACTION}~$=0.2$).
+With $k$ the per-pattern exposure count, for $k <3$:
 \[
 h_{\text{scaled}} \leftarrow h_{\text{scaled}} \cdot
 \Big(\,\code{INITIAL\_HARM\_FRACTION} +
 (1-\code{INITIAL\_HARM\_FRACTION})\cdot \tfrac{k}{3}\Big),
-\qquad \code{INITIAL\_HARM\_FRACTION}=0.2,
 \]
 so the first hit delivers $20\%$ of harm and full harm applies from the fourth
 encounter on.
@@ -502,11 +500,11 @@ encounter on.
 \subsection{Trust loss from exposure}
 \label{sub:trustloss}
 
-The per-exposure trust loss follows the documented formula
+Let $\alpha = \code{ALPHA\_EXPOSURE\_TO\_TRUST} = 0.22$.
+The per-exposure trust loss follows:
 \[
 \Delta T = -\,\alpha \cdot h_{\text{scaled}} \cdot s_m \cdot (0.6 + 0.8\,l_d)
-\cdot (1 - r_t),
-\qquad \alpha = \code{ALPHA\_EXPOSURE\_TO\_TRUST} = 0.22 .
+\cdot (1 - r_t).
 \]
 The factor $(0.6 + 0.8\,l_d)$ makes more literate users react more strongly to
 harm they sustain, and $(1 - r_t)$ lets resilient (mostly naive) users absorb
@@ -518,11 +516,11 @@ patterns are processed in the step, total trust loss is capped at
 \label{sub:harmgain}
 
 Cumulative harm grows logistically with a saturation factor, so it slows as
-$H\to1$ (modelling desensitisation):
+$H\to1$ (modelling desensitisation),
+with $\delta = \code{DELTA\_EXPOSURE\_TO\_HARM} = 0.18$:
 \[
 \Delta H = \delta \cdot h_{\text{scaled}} \cdot (0.7 + 0.6\,s_m)
-\cdot \max(0,\,1 - H),
-\qquad \delta = \code{DELTA\_EXPOSURE\_TO\_HARM} = 0.18 .
+\cdot \max(0,\,1 - H).
 \]
 Per step, harm gain is capped at \code{MAX\_HARM\_GAIN\_PER\_STEP}~$=0.04$.
 
@@ -531,19 +529,19 @@ Per step, harm gain is capped at \code{MAX\_HARM\_GAIN\_PER\_STEP}~$=0.04$.
 
 \paragraph{Propensity.}
 A user generates no negative WOM until accumulated harm passes a cooldown,
-\code{WOM\_HARM\_COOLDOWN\_THRESHOLD}~$=0.08$. Past it, a ramp factor
-$\rho = \min\!\big(1,\,(H - 0.08)/\code{WOM\_RAMP\_RANGE}\big)$ with
-\code{WOM\_RAMP\_RANGE}~$=0.25$ scales a base propensity:
-\[
-W = \rho \cdot \Big(0.10\,a_s + 0.20\,c_p + 0.45\min(1,H) + 0.25(1 - T)\Big),
-\]
+\code{WOM\_HARM\_COOLDOWN\_THRESHOLD}~$=0.08$. Past it, a ramp factor $\rho$
+(\code{WOM\_RAMP\_RANGE}~$=0.25$) and base propensity $W$ are:
+\begin{align*}
+\rho &= \min\!\big(1,\,(H - 0.08)/\code{WOM\_RAMP\_RANGE}\big), \\
+W &= \rho \cdot \Big(0.10\,a_s + 0.20\,c_p + 0.45\min(1,H) + 0.25(1 - T)\Big),
+\end{align*}
 where $a_s = $ \code{social\_activity} and $c_p = $ \code{complaint\_propensity}.
 
 \paragraph{Transmission.}
-A user with $W>0$ visits its neighbours and stops after at most
-\code{WOM\_MAX\_NEIGHBORS\_PER\_STEP}~$=3$ successful contacts. Each contact fires
-with probability $a_s \cdot c_p \cdot \code{WOM\_DAMPING\_FACTOR}$
-(\code{WOM\_DAMPING\_FACTOR}~$=0.35$). On a firing contact, the receiver's
+A user with $W>0$ visits neighbours, making at most $3$ contacts per step
+(\code{WOM\_MAX\_NEIGHBORS\_PER\_STEP}).
+Each contact fires with probability
+$a_s \cdot c_p \cdot \code{WOM\_DAMPING\_FACTOR}$ ($=0.35$). On a firing contact, the receiver's
 susceptibility is
 \[
 \text{impact} = \underbrace{\frac{1}{1 + 0.5\, m}}_{\text{diminishing returns}}
@@ -593,10 +591,10 @@ $\Delta T_{\text{rec}}$ but not above $\bar T$.
 \subsection{Natural passive recovery}
 \label{sub:natrecovery}
 
-Independently of support, trust drifts a small amount toward the same ceiling:
+Independently of support, trust drifts a small amount toward the same ceiling
+($\nu = \code{NATURAL\_TRUST\_RECOVERY} = 0.004$):
 \[
-\Delta T_{\text{nat}} = \code{NATURAL\_TRUST\_RECOVERY}\cdot(\bar T - T)\cdot(1 - I_{\text{plat}}),
-\qquad \code{NATURAL\_TRUST\_RECOVERY}=0.004,
+\Delta T_{\text{nat}} = \nu\cdot(\bar T - T)\cdot(1 - I_{\text{plat}}),
 \]
 applied only when $T < \bar T$ and again capped at $\bar T$.
 
@@ -652,18 +650,16 @@ Let $n_a$ be the number of active users and let the reputation factor be
 f_R = \big(\code{platform\_reputation}/100\big)^{\,0.5},
 \qquad \text{exponent } \code{REPUTATION\_REVENUE\_EXPONENT} = 0.5 .
 \]
-Base subscription revenue is
-$R_{\text{base}} = n_a \cdot \code{BASE\_REVENUE\_PER\_USER}\cdot f_R$ with
-\code{BASE\_REVENUE\_PER\_USER}~$=5.0$. Dark-pattern revenue rewards
-\emph{undetected} extraction more heavily than detected extraction: for each
-active pattern, with $g$ its \code{short\_term\_gain\_weight}
+Base subscription revenue is $R_{\text{base}} = n_a \cdot r_0 \cdot f_R$,
+where $r_0 = \code{BASE\_REVENUE\_PER\_USER} = 5.0$.
+Dark-pattern revenue rewards \emph{undetected} extraction more heavily than detected extraction; let $\mu_h = \code{HIDDEN\_EXTRACTION\_MULTIPLIER} = 1.5$.
+For each active pattern, with $g$ its \code{short\_term\_gain\_weight}
 (\code{forced\_trial}~$=3.0$, \code{hard\_cancel}~$=2.0$,
 \code{drip\_pricing}~$=2.5$), $n_{\text{det}}$ detected and $n_{\text{und}}$
 undetected exposures this step,
 \[
 R_{\text{dp}} \mathrel{+}= \Big(n_{\text{det}}\cdot I \cdot g
-+ n_{\text{und}}\cdot I \cdot g \cdot \code{HIDDEN\_EXTRACTION\_MULTIPLIER}\Big)\cdot f_R,
-\qquad \code{HIDDEN\_EXTRACTION\_MULTIPLIER}=1.5 .
++ n_{\text{und}}\cdot I \cdot g \cdot \mu_h\Big)\cdot f_R.
 \]
 Per-step costs are the sum of churn-replacement cost
 ($\code{step\_churns}\times\code{CHURN\_REPLACEMENT\_COST}$, $=5.0$), support cost
@@ -679,16 +675,20 @@ between cumulative projected and cumulative actual revenue.
 \label{sub:reputation}
 
 The $0$--$100$ \code{platform\_reputation} is updated each step by
-\[
-R' = \mathrm{clip}\Big(R - p_{\text{churn}} - p_{\text{wom}} + p_{\text{pos}}
-+ \code{REPUTATION\_RECOVERY\_RATE},\;
-\code{REPUTATION\_FLOOR},\; \code{REPUTATION\_NATURAL\_CAP}\Big),
-\]
-with penalties and boost expressed per capita and scaled to the $0$--$100$ range:
-$p_{\text{churn}} = (\text{step churns}/N)\cdot\code{CHURN\_REPUTATION\_WEIGHT}\cdot100$
-($0.8$), $p_{\text{wom}} = (\text{step neg-WOM}/N)\cdot\code{WOM\_REPUTATION\_WEIGHT}\cdot100$
-($0.06$), $p_{\text{pos}} = (\text{step pos-WOM}/N)\cdot\code{POSITIVE\_WOM\_REPUTATION\_WEIGHT}\cdot100$
-($0.03$); the passive recovery is \code{REPUTATION\_RECOVERY\_RATE}~$=0.10$ per
+\begin{align*}
+R' = \mathrm{clip}\bigl(&R - p_{\text{churn}} - p_{\text{wom}} + p_{\text{pos}}
++ \code{REPUTATION\_RECOVERY\_RATE},\; \\
+&\code{REPUTATION\_FLOOR},\; \code{REPUTATION\_NATURAL\_CAP}\bigr),
+\end{align*}
+where the per-capita penalties and boost ($w_c = \code{CHURN\_REPUTATION\_WEIGHT}=0.8$,
+$w_w = \code{WOM\_REPUTATION\_WEIGHT}=0.06$,
+$w_p = \code{POSITIVE\_WOM\_REPUTATION\_WEIGHT}=0.03$) are:
+\begin{align*}
+p_{\text{churn}} &= (\text{step churns}/N)\cdot w_c\cdot100, \\
+p_{\text{wom}}   &= (\text{step neg-WOM}/N)\cdot w_w\cdot100, \\
+p_{\text{pos}}   &= (\text{step pos-WOM}/N)\cdot w_p\cdot100;
+\end{align*}
+the passive recovery is \code{REPUTATION\_RECOVERY\_RATE}~$=0.10$ per
 step; and the value is clipped to $[\code{REPUTATION\_FLOOR},\,
 \code{REPUTATION\_NATURAL\_CAP}] = [2.0,\,92.0]$. A separate agent-level
 \code{reputation}~$\in[0,1]$ is the convex combination

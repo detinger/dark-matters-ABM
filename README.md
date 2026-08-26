@@ -1,17 +1,15 @@
 # Dark Patterns ABM simulation web app
 
-A full-stack project for exploring **agent-based simulations of dark patterns and long-term user trust erosion**.
+A full-stack research prototype for exploring **agent-based simulations of dark patterns and long-term user trust erosion**.
 
-This repository gives you a clean foundation for a research prototype where:
+This repository implements a complete simulation stack:
 
 - **Mesa** handles the simulation model in Python
 - **FastAPI** exposes the simulation through REST endpoints plus a live WebSocket stream
 - **React + TypeScript + Vite** provide a modern dashboard UI
-- **Mesa + SolaraViz** are available as an optional original Mesa frontend
+- **Mesa + SolaraViz** are available as an optional Mesa-native frontend
 - **Recharts** renders time-series charts
 - **react-force-graph** visualizes the full user network plus the platform node
-
-The project is intentionally designed as a **starter**: it already runs, but it also leaves room for substantial research and engineering improvements.
 
 ---
 
@@ -30,7 +28,7 @@ The project is intentionally designed as a **starter**: it already runs, but it 
   - fetching time-series results
   - exporting run data to CSV
   - deleting simulations
-- Batch experiment runner scaffold
+- Batch experiment runner
 
 ### Frontend
 - Modern React dashboard
@@ -162,22 +160,22 @@ Represents the platform/provider with variables such as:
 - long-term revenue
 
 ### Environment
-The simulation uses a user network rather than a 2D grid. The backend currently supports:
+The simulation uses a user network rather than a 2D grid. The backend supports:
 - `small_world`
 - `scale_free`
 - `random`
 
-The dashboard now visualizes the full user graph, includes the platform as a distinct graph node, and keeps a stable per-simulation layout so interaction animations can play without node positions shifting on every tick.
+The dashboard visualizes the full user graph, includes the platform as a distinct graph node, and maintains a stable per-simulation layout so interaction animations play without node positions shifting on every tick.
 
 ---
 
 ## Main simulation mechanics
 
-Each simulation step roughly follows this order:
+Each simulation step follows this order:
 
 1. **Direct exposure**
-   - users may encounter active dark patterns
-   - first N encounters deliver partial harm (exposure buildup ramp)
+   - each active user is exposed to each active dark pattern
+   - the first 3 encounters deliver partial harm (exposure buildup ramp)
 2. **Trust and harm update**
    - trust declines (dampened by trust resilience for naive users)
    - harm accumulates with logistic saturation (slows as harm approaches 1.0)
@@ -187,8 +185,8 @@ Each simulation step roughly follows this order:
    - per-step spread capped at 3 neighbors, with 0.35 global damping factor
    - receivers experience diminishing returns (repeated messages discount) and trust-shielding (high-trust users are more skeptical of complaints)
 4. **Recovery**
-   - support quality can partially repair trust (harm-dampened effectiveness)
-   - partial recovery now works even during mild exposure (proportional to exposure severity)
+   - support quality partially repairs trust (harm-dampened effectiveness)
+   - partial recovery operates during exposure, scaled proportionally to exposure severity
    - natural passive recovery: trust drifts slowly toward a harm-adjusted ceiling each step
    - recovery ceiling = `baseline × (1 − harm)` — accumulated harm permanently depresses maximum recoverable trust
    - both recovery mechanisms are weakened by active dark-pattern intensity: multiplied by `(1 − intensity)`
@@ -203,14 +201,14 @@ Each simulation step roughly follows this order:
    - small background churn unrelated to dark patterns (~0.01%/step)
 8. **Platform update**
    - reputation updated (floor at 2.0, cap at 92.0)
-   - economics: subscription revenue + dark-pattern extraction (undetected exposures earn 1.5x), both scaled by reputation factor `(reputation/100)^0.5`
+   - economics: subscription revenue + dark-pattern extraction (undetected exposures earn 1.5×), both scaled by reputation factor `(reputation/100)^0.5`
    - opportunity cost tracked: projected no-DP revenue vs actual revenue
 9. **Optional adaptation**
-   - platform may reduce dark pattern intensity if outcomes worsen
+   - the platform reduces dark pattern intensity when churn or reputation cross adaptation thresholds
 
 ### Formal tipping-point detection
 
-The current implementation records a tipping point only when a rule remains true for **5 consecutive steps**.
+A tipping point is recorded only when a rule remains true for **5 consecutive steps**.
 
 - **Trust Collapse**
   - `mean_trust <= 0.50`
@@ -286,7 +284,7 @@ Request body:
 
 This advances the model by the requested number of steps or until `max_steps` is reached.
 
-Negative values are also supported, which rewinds the simulation deterministically by rebuilding from the original seed and replaying to the target step.
+Negative values rewind the simulation deterministically by rebuilding from the original seed and replaying to the target step.
 
 ### Reset simulation
 `POST /simulations/{simulation_id}/reset`
@@ -307,7 +305,7 @@ Streams live updates for the selected simulation. Each message includes:
 - full time-series data
 - updated simulation list metadata
 
-The React dashboard uses this endpoint when `WebSocket` is selected as the live transport. `Polling` remains available as a fallback mode.
+The React dashboard uses this endpoint when `WebSocket` is selected as the live transport. `Polling` is available as a fallback transport.
 
 ### Export CSV
 `GET /simulations/{simulation_id}/export.csv`
@@ -329,18 +327,16 @@ Removes the simulation from in-memory storage.
 
 ### Prerequisites
 
-You should have installed:
-- **Python 3.11+** recommended
-- **Node.js 20+** recommended for the React dashboard
-- **npm** for the React dashboard
+Requirements:
+- **Python 3.11+**
+- **Node.js 20+**
+- **npm**
 
 ---
 
 ## Quick Local Script
 
-If you want the fastest local setup/run path from the repository root, use the
-single cross-platform helper (`dev.py`) — it works the same on Windows, macOS,
-and Linux:
+The cross-platform helper script (`dev.py`) provides the fastest setup and launch path from the repository root. It runs identically on Windows, macOS, and Linux:
 
 ```bash
 python dev.py setup
@@ -390,10 +386,10 @@ pip install -r requirements.txt
 
 ## 2. Choose a frontend
 
-You can now run the project in either of these ways:
+The project runs in two configurations:
 
-- **React dashboard + FastAPI** if you want the existing custom web app
-- **Mesa SolaraViz** if you want the original Mesa-style interactive frontend
+- **React dashboard + FastAPI** — the full custom web application
+- **Mesa SolaraViz** — the Mesa-native interactive frontend
 
 ### Option A. Run the existing React dashboard
 
@@ -405,13 +401,13 @@ From the `backend/` folder:
 python -m app.dev_server
 ```
 
-The backend should be available at:
+The backend is available at:
 
 ```text
 http://localhost:8000
 ```
 
-Interactive docs will be available at:
+Interactive API docs are available at:
 
 ```text
 http://localhost:8000/docs
@@ -429,7 +425,7 @@ npm install
 
 ### Optional environment file
 
-Copy the example file if you want to customize the API base URL.
+Copy the example file to override the default API base URL.
 
 #### macOS / Linux
 ```bash
@@ -447,7 +443,7 @@ Copy-Item .env.example .env
 npm run dev
 ```
 
-The React app should be available at:
+The React app is available at:
 
 ```text
 http://localhost:5173
@@ -461,13 +457,13 @@ From the `backend/` folder:
 solara run app/solara_app.py --production --port 8765
 ```
 
-The Mesa frontend should be available at:
+The Mesa frontend is available at:
 
 ```text
 http://localhost:8765
 ```
 
-This mode reuses the same `DarkPatternTrustModel`, keeps the platform visible in the network view, and gives you Mesa's built-in play, pause, step, and reset controls without needing the React app or FastAPI server.
+This mode reuses the same `DarkPatternTrustModel`, keeps the platform visible in the network view, and provides Mesa's built-in play, pause, step, and reset controls without requiring the React app or FastAPI server.
 
 ---
 
@@ -485,7 +481,7 @@ This mode reuses the same `DarkPatternTrustModel`, keeps the platform visible in
    - `Run Live` for continuous streaming
 6. Choose the live transport in the control panel:
    - `WebSocket` for the default low-overhead live stream
-   - `Polling` if you want to compare behavior or need a simpler fallback
+   - `Polling` as a fallback transport
 7. Load a saved simulation from the session list — the form updates to show that simulation's parameters (locked). Click `New simulation` to configure and create another run.
 
 ### Mesa SolaraViz path
@@ -500,13 +496,13 @@ This mode reuses the same `DarkPatternTrustModel`, keeps the platform visible in
 
 ## Running batch experiments
 
-The repository includes a starter batch runner in:
+The repository includes a batch experiment runner in:
 
 ```text
 backend/app/experiments.py
 ```
 
-Before running batch experiments, make sure the backend virtual environment exists and the Python dependencies are installed. Otherwise you may see errors such as `ModuleNotFoundError: No module named 'pandas'`.
+The backend virtual environment must exist and Python dependencies must be installed before running batch experiments. Without this step, Python raises `ModuleNotFoundError: No module named 'pandas'` and related import errors.
 
 Run it from the `backend/` folder:
 
@@ -518,7 +514,7 @@ pip install -r requirements.txt
 python -m app.experiments
 ```
 
-If the virtual environment is already set up, you only need:
+If the virtual environment is already set up:
 
 ```bash
 cd backend
@@ -526,7 +522,7 @@ source .venv/bin/activate
 python -m app.experiments
 ```
 
-You can also run it without activating the environment:
+To run without activating the environment:
 
 ```bash
 cd backend
@@ -564,47 +560,60 @@ backend/results/batch_results.csv
 
 ---
 
-## Suggested development roadmap
+## Development status
 
-### 1. Strengthen the scientific model
-Good next steps:
-- replace bounded normal sampling with proper Beta distributions [DONE]
-- calibrate parameters from literature or survey data [PLAN ADDED]
-- formalize tipping point detection [DONE]
-- store agent-type segments explicitly [DONE — 3 types with per-type trait ranges]
-- improve revenue model [DONE — hidden extraction, revenue breakdown, initial revenue, reputation-discounted revenue, opportunity cost tracking]
-- add trust resilience per user type [DONE]
-- add harm saturation [DONE]
-- add exposure buildup ramp [DONE]
-- add harm-dampened recovery [DONE]
-- add realistic WOM spread dynamics (cooldown, ramp-up, damping, receiver skepticism) [DONE]
-- add partial recovery during exposure and natural trust recovery [DONE]
-- fix survivorship trust rebound (harm-adjusted ceiling, intensity-dampened recovery, strict positive WOM gate) [DONE]
-- calibrate baseline churn so healthy platforms maintain steady user base (trust-deficit dead zone, intercept tuning) [DONE]
+### 1. Scientific model
 
-### 2. Improve backend architecture
-Possible upgrades:
-- add persistent storage for simulation metadata
-- save results to Postgres or Redis (I don't need that for now)
-- add background jobs for long experiments
-- add authentication if needed
+Implemented:
+- Beta(5,5) trait sampling calibrated to per-type ranges [DONE]
+- parameter calibration from literature and behavioral constraints [DONE]
+- formal tipping-point detection [DONE]
+- three discrete user types with per-type trait distributions [DONE]
+- revenue model: hidden-extraction premium, reputation-discounted revenue, opportunity cost tracking [DONE]
+- trust resilience per user type [DONE]
+- logistic harm saturation [DONE]
+- exposure buildup ramp [DONE]
+- harm-dampened recovery [DONE]
+- WOM spread dynamics: cooldown threshold, logistic ramp-up, global damping, receiver trust shield [DONE]
+- partial recovery during exposure and natural passive recovery [DONE]
+- harm-adjusted trust ceiling [DONE]
+- trust-deficit dead zone in churn model [DONE]
 
-### 3. Improve frontend UX
-Possible upgrades:
-- scenario comparison view
-- multiple saved charts
-- export to CSV/JSON/PNG [CSV DONE]
-- parameter presets
-- richer network controls
-- dark mode and polished layout system [DONE]
-- form mode state machine with view/edit separation [DONE]
+### 2. Backend architecture
+
+Implemented:
+- in-memory session management [DONE]
+- deterministic backward stepping via seeded replay [DONE]
+- WebSocket live streaming [DONE]
+- batch experiment runner [DONE]
+
+Planned extensions:
+- persistent storage for simulation sessions
+- background job processing for long experiments
+- authentication layer
+
+### 3. Frontend
+
+Implemented:
+- scenario comparison: single active simulation [DONE]
+- CSV export [DONE]
+- dark mode and polished layout [DONE]
+- form view/edit state machine [DONE]
 - auto-zero intensity when no patterns selected [DONE]
-- form sync from loaded simulation params [DONE]
+- form sync from loaded simulation parameters [DONE]
 
-### 4. Improve research workflows
-Possible upgrades:
-- notebook analysis pipeline [DONE]
-- automated report generation [DONE, csv/colab]
+Planned extensions:
+- side-by-side scenario comparison view
+- multiple saved chart overlays
+- richer network interaction controls
+
+### 4. Research workflows
+
+Implemented:
+- Colab notebook analysis pipeline [DONE]
+- CSV export for downstream analysis [DONE]
+
+Planned extensions:
 - sensitivity analysis dashboards
 - experiment registry
 
@@ -618,27 +627,21 @@ For a parameter-by-parameter calibration plan linked to literature, surveys, aud
 
 ## Known limitations
 
-
-Current limitations include:
-- simulation sessions are stored **in memory only**
-- restarting the backend clears all sessions
-- backward stepping works by deterministic replay, so large rewinds are more computationally expensive than forward steps
-- metrics are illustrative and not empirically calibrated
-- there is no authentication or persistence layer
-- long experiment execution is synchronous
-- live WebSocket updates still send full state payloads on each tick rather than smaller diffs
-- the full animated network can become visually and computationally heavy at large population sizes
-
+- Simulation sessions are stored **in memory only**; restarting the backend clears all sessions.
+- Backward stepping works by deterministic replay, so large rewinds are more computationally expensive than forward steps.
+- Parameter values are calibrated to behavioral plausibility constraints documented in `CALIBRATION_PLAN.md`; fitting against real-world platform telemetry is outside the scope of the current implementation.
+- There is no authentication or persistence layer.
+- Long experiment execution is synchronous.
+- Live WebSocket updates send full state payloads on each tick rather than incremental diffs.
+- The animated network visualization becomes computationally demanding at large population sizes.
 
 ---
 
-## Suggested thesis framing
-
-This project supports a framing like:
+## Problem framing
 
 > A stochastic, network-based agent-based simulation of long-term trust erosion caused by dark patterns in digital applications, exposed through a modern web interface for scenario exploration and comparative analysis.
 
-That framing keeps:
+The architecture separates:
 - **Mesa** as the scientific model core
 - **FastAPI** as the delivery layer
 - **React** as the presentation layer
@@ -670,13 +673,13 @@ Check:
 Check:
 - backend is running on `http://localhost:8000`
 - the browser can reach `ws://localhost:8000/api/...`
-- you can switch the live transport to `Polling` as a fallback if the socket is interrupted
+- switch the live transport to `Polling` as a fallback if the socket is interrupted
 
 ### Simulation disappears
-That is expected if the backend restarts because sessions are stored in memory.
+Expected behavior when the backend restarts, because sessions are stored in memory.
 
-### Full graph feels heavy
-The dashboard now renders the full network plus a platform node and animated interaction events. Large populations can make the browser graph slower, especially near the upper end of the allowed user count.
+### Network visualization performance
+The dashboard renders the full network plus a platform node and animated interaction events. Large populations increase browser rendering load, particularly near the upper limit of the supported user count.
 
 ---
 
@@ -701,7 +704,7 @@ Under **Settings -> Networking**, generate a Railway domain for both services.
 
 ### 3. Connect the services
 
-First open the backend's generated domain directly and confirm that `/api/health` returns `{"status":"ok"}`. Then add this runtime variable to the `frontend` service using the actual backend domain shown under **Settings -> Networking**:
+Open the backend's generated domain directly and confirm that `/api/health` returns `{"status":"ok"}`. Then add this runtime variable to the `frontend` service using the actual backend domain shown under **Settings -> Networking**:
 
 ```env
 API_UPSTREAM=https://your-backend.up.railway.app
@@ -713,7 +716,7 @@ Enter the value without surrounding quotes or a trailing `/api`. A Railway refer
 API_UPSTREAM=https://${{backend.RAILWAY_PUBLIC_DOMAIN}}
 ```
 
-The deployed frontend sends browser requests to its own `/api` path, and Caddy forwards them to `API_UPSTREAM`. This avoids cross-origin browser requests and allows the upstream to be changed at runtime. Remove any old `VITE_API_BASE` variable from the frontend service, deploy the staged variable change, and redeploy the frontend. The frontend health check uses the proxied backend health endpoint, so Railway will reject a deployment when `API_UPSTREAM` is missing or unreachable.
+The deployed frontend sends browser requests to its own `/api` path, and Caddy forwards them to `API_UPSTREAM`. This avoids cross-origin browser requests and allows the upstream to be changed at runtime. Remove any old `VITE_API_BASE` variable from the frontend service, deploy the staged variable change, and redeploy the frontend. The frontend health check uses the proxied backend health endpoint, so Railway rejects a deployment when `API_UPSTREAM` is missing or unreachable.
 
 ### 4. Verify the deployment
 
@@ -731,23 +734,3 @@ If the proxied health check returns `502`, Caddy cannot reach `API_UPSTREAM`. Co
 ## Version history
 
 See `VERSION_NOTES.md` for a concise changelog.
-
-## Recommended next files to add
-
-If you want to continue developing this seriously, the next high-value additions are:
-
-- `backend/app/simulation/scenarios.py`
-- `backend/app/simulation/serialization.py`
-- `backend/app/analysis/`
-- `frontend/src/pages/ComparisonPage.tsx`
-- `frontend/src/components/ScenarioPresetCards.tsx`
-- `frontend/src/components/ExportButtons.tsx`
-
----
-
-## Final note
-
-The simulation is already separated cleanly enough that you can evolve it in three directions at once:
-- scientific model refinement
-- API hardening
-- UI modernization
